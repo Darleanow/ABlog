@@ -52,7 +52,7 @@ export default function RootLayout({
               <Link
                 isExternal
                 className="flex items-center gap-1 text-current"
-                href="https://github.com/Darleanow/BlogCC"
+                href="https://github.com/Darleanow/ABlog"
                 title="Source Code"
               >
                 <span className="text-default-600">Made with</span>
