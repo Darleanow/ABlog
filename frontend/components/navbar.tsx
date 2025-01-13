@@ -13,6 +13,7 @@ import { Input } from "@nextui-org/input";
 import { link as linkStyles } from "@nextui-org/theme";
 import NextLink from "next/link";
 import clsx from "clsx";
+import { button as buttonStyles } from "@nextui-org/theme";
 
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
@@ -65,6 +66,14 @@ export const Navbar = () => {
             </NavbarItem>
           ))}
         </ul>
+        <NavbarItem>
+          <Link
+            className={`${buttonStyles({ variant: "bordered", radius: "full" })} ml-4 font-bold`}
+            href="/new"
+          >
+            New article
+          </Link>
+        </NavbarItem>
       </NavbarContent>
 
       <NavbarContent
