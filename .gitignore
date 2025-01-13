@@ -1,0 +1,39 @@
+# Root level
+.DS_Store
+.env
+.vscode/
+.idea/
+venv/
+.venv/
+
+# Frontend
+frontend/node_modules/
+frontend/package-lock.json
+frontend/.next/
+frontend/.env*
+frontend/coverage/
+frontend/build/
+frontend/dist/
+frontend/out/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# Backend
+backend/node_modules/
+backend/**/__pycache__/
+backend/*.py[cod]
+backend/*$py.class
+backend/*.so
+backend/.env
+backend/.venv
+backend/venv/
+backend/ENV/
+backend/env/
+backend/*.egg-info/
+backend/dist/
+backend/build/
+backend/.coverage
+backend/htmlcov/
+backend/.pytest_cache/
+backend/.coverage.*
