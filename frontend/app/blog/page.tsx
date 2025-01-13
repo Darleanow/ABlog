@@ -1,9 +1,17 @@
-import { title } from "@/components/primitives";
+"use client";
+
+import { Tabs, Tab } from "@nextui-org/tabs";
 
 export default function BlogPage() {
   return (
-    <div>
-      <h1 className={title()}>Blog</h1>
-    </div>
+    <section className="flex flex-col gap-4">
+      <div className="flex flex-wrap gap-4">
+        <Tabs variant={"underlined"}>
+          <Tab key="it" title="IT" />
+          <Tab key="data-science" title="Data Science" />
+          <Tab key="cpp" title="C++" />
+        </Tabs>
+      </div>
+    </section>
   );
 }
