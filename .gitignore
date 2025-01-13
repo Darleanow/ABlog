@@ -21,19 +21,13 @@ frontend/yarn-error.log*
 
 # Backend
 backend/node_modules/
-backend/**/__pycache__/
-backend/*.py[cod]
-backend/*$py.class
-backend/*.so
-backend/.env
-backend/.venv
-backend/venv/
-backend/ENV/
-backend/env/
-backend/*.egg-info/
-backend/dist/
+backend/package-lock.json
+backend/.next/
+backend/.env*
+backend/coverage/
 backend/build/
-backend/.coverage
-backend/htmlcov/
-backend/.pytest_cache/
-backend/.coverage.*
+backend/dist/
+backend/out/
+backend/npm-debug.log*
+backend/yarn-debug.log*
+backend/yarn-error.log*
