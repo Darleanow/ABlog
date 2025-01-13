@@ -2,6 +2,8 @@
 
 import { Tabs, Tab } from "@nextui-org/tabs";
 
+import ArticlesList from "@/components/articles";
+
 export default function BlogPage() {
   return (
     <section className="flex flex-col gap-4">
@@ -12,6 +14,7 @@ export default function BlogPage() {
           <Tab key="cpp" title="C++" />
         </Tabs>
       </div>
+      <ArticlesList />
     </section>
   );
 }
