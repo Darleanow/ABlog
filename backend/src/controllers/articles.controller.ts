@@ -3,36 +3,71 @@ import { supabase } from "../config/database";
 import slugify from "slugify";
 import {
   AuthenticatedRequest,
-  CreateArticleBody,
-  UpdateArticleBody,
   Article,
   ArticleWithRelations,
+  CreateArticleBody,
+  UpdateArticleBody,
   ArticleCategoryInsert,
   ArticleTagInsert,
-} from "../models/types";
+  Category,
+  AuthorInfo,
+  Comment
+} from "../models";
+
+interface CategoryJoinResult {
+  categories: Category;
+}
+
+interface TagJoinResult {
+  tags: Category;
+}
+
+interface SupabaseArticleResult extends Article {
+  author: AuthorInfo;
+  article_categories: CategoryJoinResult[];
+  article_tags: TagJoinResult[];
+  article_likes: { count: number | null };
+  favorites: { count: number | null };
+  comments?: Comment[];
+}
 
 export class ArticlesController {
   async getAllArticles(_req: AuthenticatedRequest, res: Response) {
     try {
-      const { data, error } = (await supabase
+      const { data, error } = await supabase
         .from("articles")
         .select(`
-            *,
-            author:users(username, full_name, avatar_url),
-            categories(*),
-            tags(*),
-            article_likes(count),
-            favorites(count)
-          `)
-        .eq("status", "published")
-        .order("created_at", { ascending: false })) as {
-        data: ArticleWithRelations[] | null;
-        error: any;
-      };
+          *,
+          author:users!articles_author_id_fkey(username, full_name, avatar_url),
+          article_categories!inner(
+            categories(*)
+          ),
+          article_tags!inner(
+            tags(*)
+          ),
+          article_likes(count),
+          favorites(count)
+        `) as { data: SupabaseArticleResult[] | null; error: any };
 
       if (error) throw error;
 
-      return res.json(data);
+      const transformedData = data?.map(article => {
+        const transformed: ArticleWithRelations = {
+          ...article,
+          author: article.author,
+          categories: article.article_categories.map(
+            (ac: CategoryJoinResult) => ac.categories
+          ),
+          tags: article.article_tags.map(
+            (at: TagJoinResult) => at.tags
+          ),
+          likes_count: article.article_likes?.count || 0,
+          favorites_count: article.favorites?.count || 0
+        };
+        return transformed;
+      });
+
+      return res.json(transformedData);
     } catch (error) {
       return res.status(500).json({ error: error.message });
     }
@@ -41,36 +76,49 @@ export class ArticlesController {
   async getArticleBySlug(req: AuthenticatedRequest, res: Response) {
     try {
       const { slug } = req.params;
-      const { data, error } = (await supabase
+      const { data, error } = await supabase
         .from("articles")
         .select(`
+          *,
+          author:users!articles_author_id_fkey(username, full_name, avatar_url),
+          article_categories!inner(
+            categories(*)
+          ),
+          article_tags!inner(
+            tags(*)
+          ),
+          comments(
             *,
-            author:users(username, full_name, avatar_url),
-            categories(*),
-            tags(*),
-            comments(
-              *,
-              user:users(username, full_name, avatar_url)
-            ),
-            article_likes(count),
-            favorites(count)
-          `)
+            user:users!comments_user_id_fkey(username, full_name, avatar_url)
+          ),
+          article_likes(count),
+          favorites(count)
+        `)
         .eq("slug", slug)
-        .single()) as {
-        data: ArticleWithRelations | null;
-        error: any;
-      };
+        .single() as { data: SupabaseArticleResult | null; error: any };
 
       if (error) throw error;
       if (!data) return res.status(404).json({ error: "Article not found" });
 
-      // Increment view count
+      const transformedData: ArticleWithRelations = {
+        ...data,
+        author: data.author,
+        categories: data.article_categories.map(
+          (ac: CategoryJoinResult) => ac.categories
+        ),
+        tags: data.article_tags.map(
+          (at: TagJoinResult) => at.tags
+        ),
+        likes_count: data.article_likes?.count || 0,
+        favorites_count: data.favorites?.count || 0
+      };
+
       await supabase
         .from("articles")
         .update({ view_count: (data.view_count || 0) + 1 })
         .eq("id", data.id);
 
-      return res.json(data);
+      return res.json(transformedData);
     } catch (error) {
       return res.status(500).json({ error: error.message });
     }
@@ -87,7 +135,6 @@ export class ArticlesController {
         tagIds,
       } = req.body as CreateArticleBody;
 
-      // Create the article
       const { data: article, error: articleError } = await supabase
         .from("articles")
         .insert({
@@ -105,7 +152,6 @@ export class ArticlesController {
 
       if (articleError) throw articleError;
 
-      // Add categories if provided
       if (categoryIds?.length) {
         const { error: categoriesError } = await supabase
           .from("article_categories")
@@ -121,7 +167,6 @@ export class ArticlesController {
         if (categoriesError) throw categoriesError;
       }
 
-      // Add tags if provided
       if (tagIds?.length) {
         const { error: tagsError } = await supabase.from("article_tags").insert(
           tagIds.map(
@@ -135,15 +180,16 @@ export class ArticlesController {
         if (tagsError) throw tagsError;
       }
 
-      // Fetch the complete article with relations
       const { data: articleWithRelations, error: fetchError } = (await supabase
         .from("articles")
-        .select(`
+        .select(
+          `
             *,
             author:users(username, full_name, avatar_url),
             categories(*),
             tags(*)
-          `)
+          `
+        )
         .eq("id", article.id)
         .single()) as {
         data: ArticleWithRelations | null;
@@ -171,7 +217,6 @@ export class ArticlesController {
         status,
       } = req.body as UpdateArticleBody;
 
-      // Check if user is the author or admin
       const { data: article, error: fetchError } = await supabase
         .from("articles")
         .select("author_id")
@@ -181,7 +226,6 @@ export class ArticlesController {
       if (fetchError) throw fetchError;
       if (!article) return res.status(404).json({ error: "Article not found" });
 
-      // Verify ownership or admin status
       const { data: user } = await supabase
         .from("users")
         .select("is_admin")
@@ -192,7 +236,6 @@ export class ArticlesController {
         return res.status(403).json({ error: "Unauthorized" });
       }
 
-      // Update the article
       const updateData: Partial<Article> = {};
       if (title) {
         updateData.title = title;
@@ -200,7 +243,8 @@ export class ArticlesController {
       }
       if (content) updateData.content = content;
       if (excerpt) updateData.excerpt = excerpt;
-      if (featured_image_url) updateData.featured_image_url = featured_image_url;
+      if (featured_image_url)
+        updateData.featured_image_url = featured_image_url;
       if (status) updateData.status = status;
 
       const { error: updateError } = await supabase
@@ -212,7 +256,6 @@ export class ArticlesController {
 
       if (updateError) throw updateError;
 
-      // Update categories if provided
       if (categoryIds) {
         await supabase.from("article_categories").delete().eq("article_id", id);
 
@@ -228,7 +271,6 @@ export class ArticlesController {
         }
       }
 
-      // Update tags if provided
       if (tagIds) {
         await supabase.from("article_tags").delete().eq("article_id", id);
 
@@ -244,22 +286,24 @@ export class ArticlesController {
         }
       }
 
-      // Fetch the updated article with all relations
-      const { data: articleWithRelations, error: finalFetchError } = (await supabase
-        .from("articles")
-        .select(`
+      const { data: articleWithRelations, error: finalFetchError } =
+        (await supabase
+          .from("articles")
+          .select(
+            `
             *,
             author:users(username, full_name, avatar_url),
             categories(*),
             tags(*),
             article_likes(count),
             favorites(count)
-          `)
-        .eq("id", id)
-        .single()) as {
-        data: ArticleWithRelations | null;
-        error: any;
-      };
+          `
+          )
+          .eq("id", id)
+          .single()) as {
+          data: ArticleWithRelations | null;
+          error: any;
+        };
 
       if (finalFetchError) throw finalFetchError;
 
