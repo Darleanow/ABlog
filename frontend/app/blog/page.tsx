@@ -1,21 +1,20 @@
 "use client";
 
-import { Tabs, Tab } from "@nextui-org/tabs";
-import { useMemo, useState } from "react";
+import React from "react";
+import { Tab, Tabs } from "@nextui-org/tabs";
+
+import BentoGrid from "./BentoGrid";
 
 import { useArticles } from "@/hooks/useArticles";
-import ArticlesList from "@/components/articles";
-import { Category } from "@/lib/models/category";
 
-export default function BlogPage() {
+const BlogPage = () => {
   const { articles } = useArticles();
-  const [selectedCategory, setSelectedCategory] = useState<
-    string | number | null
-  >("all");
+  const [selectedCategory, setSelectedCategory] = React.useState("all");
 
-  const categories = useMemo(() => {
+  const categories = React.useMemo(() => {
     if (!articles) return [];
-    const categoryMap = new Map<string, Category>();
+
+    const categoryMap = new Map();
 
     articles.forEach((article) => {
       article.categories.forEach((category) => {
@@ -28,21 +27,36 @@ export default function BlogPage() {
     return Array.from(categoryMap.values());
   }, [articles]);
 
+  const displayedArticles = React.useMemo(() => {
+    if (!articles) return [];
+    if (selectedCategory === "all") return articles;
+
+    return articles.filter((article) =>
+      article.categories.some((category) => category.slug === selectedCategory),
+    );
+  }, [articles, selectedCategory]);
+
   return (
-    <section className="flex flex-col gap-4">
-      <div className="flex flex-wrap gap-4">
+    <main className="max-w-7xl">
+      <div>
         <Tabs
-          selectedKey={selectedCategory}
-          variant="underlined"
-          onSelectionChange={setSelectedCategory}
+          aria-label="Tabs variants"
+          variant={"underlined"}
+          onSelectionChange={(key) => setSelectedCategory(key as string)}
         >
-          <Tab key="all" title="All" />
+          <Tab key={"all"} title={"All"} value={"all"} />
           {categories.map((category) => (
-            <Tab key={category.slug} title={category.name} />
+            <Tab
+              key={category.slug}
+              title={category.name}
+              value={category.slug}
+            />
           ))}
         </Tabs>
       </div>
-      <ArticlesList selectedCategory={selectedCategory?.toString() ?? "all"} />
-    </section>
+      <BentoGrid articles={displayedArticles} />
+    </main>
   );
-}
+};
+
+export default BlogPage;
