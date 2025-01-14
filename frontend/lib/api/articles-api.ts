@@ -15,6 +15,6 @@ export class ArticlesApi extends BaseApi {
   }
 
   async getArticleBySlug(slug: string): Promise<Article> {
-    return this.fetchApi<Article>(`${API_CONFIG.endpoints.articles}/:${slug}`);
+    return this.fetchApi<Article>(`${API_CONFIG.endpoints.articles}/${slug}`);
   }
 }
