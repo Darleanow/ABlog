@@ -1,32 +1,20 @@
 import { Router } from "express";
 import { CommentsController } from "../controllers/comments.controller";
-import {authenticate, verifyOwnership} from "../middleware/auth.middleware";
+import {authenticate, verifyUserOwnership} from "../middleware/auth.middleware";
 
 const router = Router();
-const commentsController = new CommentsController();
+const commentController = new CommentsController();
 
-router.get(
-    "/:article_id",
-    commentsController.getCommentsByArticleId.bind(commentsController)
-);
+// Routes publiques
+router.get("/article/:articleId", commentController.getCommentsByArticleId.bind(commentController));
+router.get("/:id", commentController.getCommentById.bind(commentController));
+router.get("/:commentId/replies", commentController.getRepliesByCommentId.bind(commentController));
 
+// Routes authentifiées
 router.use(authenticate);
 
-router.post(
-    "/:article_id",
-    commentsController.createComment.bind(commentsController)
-);
-
-router.put(
-    "/:id",
-    verifyOwnership("comments"),
-    commentsController.updateComment.bind(commentsController)
-);
-
-router.delete(
-    "/:id",
-    verifyOwnership("comments"),
-    commentsController.deleteComment.bind(commentsController)
-);
+router.post("/article/:articleId", commentController.createComment.bind(commentController));
+router.put("/:id", verifyUserOwnership(),commentController.updateComment.bind(commentController));
+router.delete("/:id", verifyUserOwnership(), commentController.deleteComment.bind(commentController));
 
 export default router;
