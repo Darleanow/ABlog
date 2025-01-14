@@ -16,7 +16,6 @@ export class TagsController {
         try {
             const { articleId } = req.params;
 
-            // Vérifier si l'article existe
             const { data: article, error: articleError } = await supabase
                 .from("articles")
                 .select("id")
@@ -27,7 +26,6 @@ export class TagsController {
                 return res.status(404).json({ error: "Article not found" });
             }
 
-            // Récupérer tous les tags associés à l'article
             const { data: tags, error } = await supabase
                 .from("article_tags")
                 .select(`
@@ -42,7 +40,6 @@ export class TagsController {
 
             if (error) throw error;
 
-            // Transformer les données pour n'avoir que les tags
             const transformedTags = tags?.map(item => item.tags) || [];
 
             return res.json(transformedTags);
@@ -93,7 +90,6 @@ export class TagsController {
                 return res.status(400).json({ error: "Tag name is required" });
             }
 
-            // Vérifier si l'utilisateur est admin
             const { data: user } = await supabase
                 .from("users")
                 .select("is_admin")
@@ -110,7 +106,6 @@ export class TagsController {
                 trim: true
             });
 
-            // Vérifier si le slug existe déjà
             const { data: existingTag } = await supabase
                 .from("tags")
                 .select("slug")
@@ -148,7 +143,6 @@ export class TagsController {
                 return res.status(400).json({ error: "Tag name is required" });
             }
 
-            // Vérifier si l'utilisateur est admin
             const { data: user } = await supabase
                 .from("users")
                 .select("is_admin")
@@ -165,7 +159,6 @@ export class TagsController {
                 trim: true
             });
 
-            // Vérifier si le nouveau slug n'existe pas déjà (sauf pour le tag actuel)
             const { data: slugExists } = await supabase
                 .from("tags")
                 .select("id")
@@ -197,7 +190,6 @@ export class TagsController {
         try {
             const { id } = req.params;
 
-            // Vérifier si l'utilisateur est admin
             const { data: user } = await supabase
                 .from("users")
                 .select("is_admin")
@@ -208,7 +200,6 @@ export class TagsController {
                 return res.status(403).json({ error: "Only admins can delete tags" });
             }
 
-            // Vérifier si le tag existe
             const { data: existingTag, error: fetchError } = await supabase
                 .from("tags")
                 .select("*")

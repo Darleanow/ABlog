@@ -5,12 +5,12 @@ import { authenticate } from "../middleware/auth.middleware";
 const router = Router();
 const tagController = new TagsController();
 
-// Routes publiques
+// public routes
 router.get("/", tagController.getAllTags.bind(tagController));
 router.get("/article/:articleId", tagController.getTagsByArticleId.bind(tagController));
 router.get("/:slug", tagController.getTagBySlug.bind(tagController));
 
-// Routes authentifiées (admin uniquement)
+
 router.use(authenticate);
 
 router.post("/", tagController.createTag.bind(tagController));

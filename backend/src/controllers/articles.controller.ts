@@ -318,7 +318,6 @@ export class ArticlesController {
     try {
       const { id } = req.params;
 
-      // Vérifier si l'article existe et récupérer l'auteur
       const { data: article, error: fetchError } = await supabase
           .from("articles")
           .select("author_id")
@@ -328,7 +327,6 @@ export class ArticlesController {
       if (fetchError) throw fetchError;
       if (!article) return res.status(404).json({ error: "Article not found" });
 
-      // Vérifier si l'utilisateur est l'auteur ou un admin
       const { data: user } = await supabase
           .from("users")
           .select("is_admin")
@@ -339,7 +337,6 @@ export class ArticlesController {
         return res.status(403).json({ error: "Unauthorized" });
       }
 
-      // Supprimer l'article (les relations seront supprimées automatiquement grâce aux contraintes ON DELETE CASCADE)
       const { error: deleteError } = await supabase
           .from("articles")
           .delete()
@@ -358,7 +355,6 @@ export class ArticlesController {
       const { id } = req.params;
       const userId = req.user.id;
 
-      // Vérifier si l'article existe
       const { data: article, error: articleError } = await supabase
           .from("articles")
           .select("id")
@@ -369,7 +365,6 @@ export class ArticlesController {
         return res.status(404).json({ error: "Article not found" });
       }
 
-      // Vérifier si l'utilisateur a déjà liké l'article
       const { data: existingLike, error: likeError } = await supabase
           .from("article_likes")
           .select("*")
@@ -385,7 +380,6 @@ export class ArticlesController {
         return res.status(400).json({ error: "Article already liked" });
       }
 
-      // Créer le like
       const { error: insertError } = await supabase
           .from("article_likes")
           .insert({
@@ -395,7 +389,6 @@ export class ArticlesController {
 
       if (insertError) throw insertError;
 
-      // Récupérer le nouveau compte de likes
       const { data: likeCount, error: countError } = await supabase
           .from("article_likes")
           .select("count", { count: "exact" })
@@ -422,7 +415,6 @@ export class ArticlesController {
 
       if (deleteError) throw deleteError;
 
-      // Récupérer le nouveau compte de likes
       const { data: likeCount, error: countError } = await supabase
           .from("article_likes")
           .select("count", { count: "exact" })
@@ -441,7 +433,6 @@ export class ArticlesController {
       const { id } = req.params;
       const userId = req.user.id;
 
-      // Vérifier si l'article existe
       const { data: article, error: articleError } = await supabase
           .from("articles")
           .select("id")
@@ -452,7 +443,6 @@ export class ArticlesController {
         return res.status(404).json({ error: "Article not found" });
       }
 
-      // Vérifier si l'article est déjà dans les favoris
       const { data: existingFavorite, error: favoriteError } = await supabase
           .from("favorites")
           .select("*")
@@ -468,7 +458,6 @@ export class ArticlesController {
         return res.status(400).json({ error: "Article already in favorites" });
       }
 
-      // Ajouter aux favoris
       const { error: insertError } = await supabase
           .from("favorites")
           .insert({
@@ -478,7 +467,6 @@ export class ArticlesController {
 
       if (insertError) throw insertError;
 
-      // Récupérer le nouveau compte de favoris
       const { data: favoriteCount, error: countError } = await supabase
           .from("favorites")
           .select("count", { count: "exact" })

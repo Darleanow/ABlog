@@ -173,7 +173,6 @@ export class CommentsController {
                 return res.status(400).json({ error: "Comment content is required" });
             }
 
-            // Vérifier si le commentaire existe et appartient à l'utilisateur
             const { data: existingComment, error: fetchError } = await supabase
                 .from("comments")
                 .select("user_id")
@@ -217,7 +216,6 @@ export class CommentsController {
         try {
             const { id } = req.params;
 
-            // Vérifier si le commentaire existe
             const { data: existingComment, error: fetchError } = await supabase
                 .from("comments")
                 .select("user_id")
