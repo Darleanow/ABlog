@@ -5,12 +5,12 @@ import {authenticate, verifyUserOwnership} from "../middleware/auth.middleware";
 const router = Router();
 const commentController = new CommentsController();
 
-// Routes publiques
+// public routes
 router.get("/article/:articleId", commentController.getCommentsByArticleId.bind(commentController));
 router.get("/:id", commentController.getCommentById.bind(commentController));
 router.get("/:commentId/replies", commentController.getRepliesByCommentId.bind(commentController));
 
-// Routes authentifiées
+
 router.use(authenticate);
 
 router.post("/article/:articleId", commentController.createComment.bind(commentController));

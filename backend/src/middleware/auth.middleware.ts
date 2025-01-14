@@ -132,10 +132,8 @@ export const verifyUserOwnership = (paramName: string = 'userId'): RequestHandle
       const targetUserId = req.params[paramName];
       const { id: currentUserId } = (req as AuthenticatedRequest).user;
 
-      // Convertir les IDs en chaînes de caractères pour la comparaison
       const currentUserIdStr = currentUserId.toString();
 
-      // Vérifier si l'utilisateur est administrateur
       const { data: userData, error: userError } = await supabase
           .from("users")
           .select("is_admin")
@@ -147,7 +145,6 @@ export const verifyUserOwnership = (paramName: string = 'userId'): RequestHandle
         return;
       }
 
-      // Permettre l'accès si l'utilisateur est admin ou si c'est ses propres données
       if (currentUserIdStr !== targetUserId && !userData?.is_admin) {
         res.status(403).json({
           error: "Vous n'êtes pas autorisé à modifier les données d'un autre utilisateur"
