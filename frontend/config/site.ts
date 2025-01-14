@@ -1,7 +1,7 @@
 export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
-  name: "blog-cc",
+  name: "ABlog",
   description: "The best blogging site that has ever existed :D",
   navItems: [
     {
