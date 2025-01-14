@@ -4,5 +4,10 @@ export const API_CONFIG = {
     articles: "/articles",
     categories: "/categories",
     tags: "/tags",
+    auth: {
+      signUp: "/auth/signup",
+      signIn: "/auth/signin",
+      signOut: "/auth/signout",
+    },
   },
 } as const;
