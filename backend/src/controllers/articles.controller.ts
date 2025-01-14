@@ -61,8 +61,8 @@ export class ArticlesController {
           tags: article.article_tags.map(
             (at: TagJoinResult) => at.tags
           ),
-          likes_count: article.article_likes?.count || 0,
-          favorites_count: article.favorites?.count || 0
+          likes_count: article.article_likes?.count ?? 0,
+          favorites_count: article.favorites?.count ?? 0
         };
         return transformed;
       });
@@ -109,8 +109,8 @@ export class ArticlesController {
         tags: data.article_tags.map(
           (at: TagJoinResult) => at.tags
         ),
-        likes_count: data.article_likes?.count || 0,
-        favorites_count: data.favorites?.count || 0
+        likes_count: data.article_likes?.count ?? 0,
+        favorites_count: data.favorites?.count ?? 0
       };
 
       await supabase
