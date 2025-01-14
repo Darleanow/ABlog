@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { CommentsController } from "../controllers/comments.controller";
-import { authenticate } from "../middleware/auth.middleware";
+import {authenticate, verifyOwnership} from "../middleware/auth.middleware";
 
 const router = Router();
 const commentsController = new CommentsController();
@@ -19,11 +19,13 @@ router.post(
 
 router.put(
     "/:id",
+    verifyOwnership("comments"),
     commentsController.updateComment.bind(commentsController)
 );
 
 router.delete(
     "/:id",
+    verifyOwnership("comments"),
     commentsController.deleteComment.bind(commentsController)
 );
 
