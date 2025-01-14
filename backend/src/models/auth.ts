@@ -18,6 +18,14 @@ export interface SupabaseUser {
   user_metadata: SupabaseMetadata;
   aud: string;
   created_at: string;
+  last_sign_in_at?: string;
+}
+
+export interface AuthUserData {
+  id: string;
+  provider?: string;
+  last_sign_in?: string;
+  created_at: string;
 }
 
 export interface AuthenticatedRequest extends Request {
