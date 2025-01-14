@@ -1,6 +1,6 @@
-import { HttpError } from "./types/http-error";
+import { API_CONFIG } from "../config/api.config";
 
-import { API_CONFIG } from "@/lib/config/api.config";
+import { HttpError } from "./types/http-error";
 
 export class BaseApi {
   protected baseUrl: string;
@@ -22,9 +22,12 @@ export class BaseApi {
     });
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+
       throw new HttpError(
         response.status,
-        `API Error: ${response.status} ${response.statusText}`,
+        errorData.error ||
+          `API Error: ${response.status} ${response.statusText}`,
       );
     }
 
