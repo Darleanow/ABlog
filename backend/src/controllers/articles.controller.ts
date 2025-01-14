@@ -11,7 +11,7 @@ import {
   ArticleTagInsert,
   Category,
   AuthorInfo,
-  Comment
+  Comment,
 } from "../models";
 
 interface CategoryJoinResult {
@@ -34,9 +34,7 @@ interface SupabaseArticleResult extends Article {
 export class ArticlesController {
   async getAllArticles(_req: AuthenticatedRequest, res: Response) {
     try {
-      const { data, error } = await supabase
-        .from("articles")
-        .select(`
+      const { data, error } = (await supabase.from("articles").select(`
           *,
           author:users!articles_author_id_fkey(username, full_name, avatar_url),
           article_categories!inner(
@@ -47,11 +45,11 @@ export class ArticlesController {
           ),
           article_likes(count),
           favorites(count)
-        `) as { data: SupabaseArticleResult[] | null; error: any };
+        `)) as { data: SupabaseArticleResult[] | null; error: any };
 
       if (error) throw error;
 
-      const transformedData = data?.map(article => {
+      const transformedData = data?.map((article) => {
         const transformed: ArticleWithRelations = {
           ...article,
           author: article.author,
@@ -76,9 +74,10 @@ export class ArticlesController {
   async getArticleBySlug(req: AuthenticatedRequest, res: Response) {
     try {
       const { slug } = req.params;
-      const { data, error } = await supabase
+      const { data, error } = (await supabase
         .from("articles")
-        .select(`
+        .select(
+          `
           *,
           author:users!articles_author_id_fkey(username, full_name, avatar_url),
           article_categories!inner(
@@ -93,9 +92,10 @@ export class ArticlesController {
           ),
           article_likes(count),
           favorites(count)
-        `)
+        `
+        )
         .eq("slug", slug)
-        .single() as { data: SupabaseArticleResult | null; error: any };
+        .single()) as { data: SupabaseArticleResult | null; error: any };
 
       if (error) throw error;
       if (!data) return res.status(404).json({ error: "Article not found" });
@@ -313,34 +313,33 @@ export class ArticlesController {
     }
   }
 
-
   async deleteArticle(req: AuthenticatedRequest, res: Response) {
     try {
       const { id } = req.params;
 
       const { data: article, error: fetchError } = await supabase
-          .from("articles")
-          .select("author_id")
-          .eq("id", id)
-          .single();
+        .from("articles")
+        .select("author_id")
+        .eq("id", id)
+        .single();
 
       if (fetchError) throw fetchError;
       if (!article) return res.status(404).json({ error: "Article not found" });
 
       const { data: user } = await supabase
-          .from("users")
-          .select("is_admin")
-          .eq("id", req.user.id)
-          .single();
+        .from("users")
+        .select("is_admin")
+        .eq("id", req.user.id)
+        .single();
 
       if (article.author_id !== req.user.id && !user?.is_admin) {
         return res.status(403).json({ error: "Unauthorized" });
       }
 
       const { error: deleteError } = await supabase
-          .from("articles")
-          .delete()
-          .eq("id", id);
+        .from("articles")
+        .delete()
+        .eq("id", id);
 
       if (deleteError) throw deleteError;
 
@@ -356,23 +355,23 @@ export class ArticlesController {
       const userId = req.user.id;
 
       const { data: article, error: articleError } = await supabase
-          .from("articles")
-          .select("id")
-          .eq("id", id)
-          .single();
+        .from("articles")
+        .select("id")
+        .eq("id", id)
+        .single();
 
       if (articleError || !article) {
         return res.status(404).json({ error: "Article not found" });
       }
 
       const { data: existingLike, error: likeError } = await supabase
-          .from("article_likes")
-          .select("*")
-          .eq("article_id", id)
-          .eq("user_id", userId)
-          .single();
+        .from("article_likes")
+        .select("*")
+        .eq("article_id", id)
+        .eq("user_id", userId)
+        .single();
 
-      if (likeError && likeError.code !== "PGRST116") { // PGRST116 = not found, which is what we want
+      if (likeError && likeError.code !== "PGRST116") {
         throw likeError;
       }
 
@@ -381,18 +380,18 @@ export class ArticlesController {
       }
 
       const { error: insertError } = await supabase
-          .from("article_likes")
-          .insert({
-            article_id: parseInt(id),
-            user_id: userId
-          });
+        .from("article_likes")
+        .insert({
+          article_id: parseInt(id),
+          user_id: userId,
+        });
 
       if (insertError) throw insertError;
 
       const { data: likeCount, error: countError } = await supabase
-          .from("article_likes")
-          .select("count", { count: "exact" })
-          .eq("article_id", id);
+        .from("article_likes")
+        .select("count", { count: "exact" })
+        .eq("article_id", id);
 
       if (countError) throw countError;
 
@@ -408,17 +407,17 @@ export class ArticlesController {
       const userId = req.user.id;
 
       const { error: deleteError } = await supabase
-          .from("article_likes")
-          .delete()
-          .eq("article_id", id)
-          .eq("user_id", userId);
+        .from("article_likes")
+        .delete()
+        .eq("article_id", id)
+        .eq("user_id", userId);
 
       if (deleteError) throw deleteError;
 
       const { data: likeCount, error: countError } = await supabase
-          .from("article_likes")
-          .select("count", { count: "exact" })
-          .eq("article_id", id);
+        .from("article_likes")
+        .select("count", { count: "exact" })
+        .eq("article_id", id);
 
       if (countError) throw countError;
 
@@ -434,21 +433,21 @@ export class ArticlesController {
       const userId = req.user.id;
 
       const { data: article, error: articleError } = await supabase
-          .from("articles")
-          .select("id")
-          .eq("id", id)
-          .single();
+        .from("articles")
+        .select("id")
+        .eq("id", id)
+        .single();
 
       if (articleError || !article) {
         return res.status(404).json({ error: "Article not found" });
       }
 
       const { data: existingFavorite, error: favoriteError } = await supabase
-          .from("favorites")
-          .select("*")
-          .eq("article_id", id)
-          .eq("user_id", userId)
-          .single();
+        .from("favorites")
+        .select("*")
+        .eq("article_id", id)
+        .eq("user_id", userId)
+        .single();
 
       if (favoriteError && favoriteError.code !== "PGRST116") {
         throw favoriteError;
@@ -458,19 +457,17 @@ export class ArticlesController {
         return res.status(400).json({ error: "Article already in favorites" });
       }
 
-      const { error: insertError } = await supabase
-          .from("favorites")
-          .insert({
-            article_id: parseInt(id),
-            user_id: userId
-          });
+      const { error: insertError } = await supabase.from("favorites").insert({
+        article_id: parseInt(id),
+        user_id: userId,
+      });
 
       if (insertError) throw insertError;
 
       const { data: favoriteCount, error: countError } = await supabase
-          .from("favorites")
-          .select("count", { count: "exact" })
-          .eq("article_id", id);
+        .from("favorites")
+        .select("count", { count: "exact" })
+        .eq("article_id", id);
 
       if (countError) throw countError;
 
@@ -486,17 +483,17 @@ export class ArticlesController {
       const userId = req.user.id;
 
       const { error: deleteError } = await supabase
-          .from("favorites")
-          .delete()
-          .eq("article_id", id)
-          .eq("user_id", userId);
+        .from("favorites")
+        .delete()
+        .eq("article_id", id)
+        .eq("user_id", userId);
 
       if (deleteError) throw deleteError;
 
       const { data: favoriteCount, error: countError } = await supabase
-          .from("favorites")
-          .select("count", { count: "exact" })
-          .eq("article_id", id);
+        .from("favorites")
+        .select("count", { count: "exact" })
+        .eq("article_id", id);
 
       if (countError) throw countError;
 
@@ -505,5 +502,4 @@ export class ArticlesController {
       return res.status(500).json({ error: error.message });
     }
   }
-
 }

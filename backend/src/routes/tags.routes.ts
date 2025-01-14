@@ -5,11 +5,9 @@ import { authenticate } from "../middleware/auth.middleware";
 const router = Router();
 const tagController = new TagsController();
 
-// public routes
 router.get("/", tagController.getAllTags.bind(tagController));
 router.get("/article/:articleId", tagController.getTagsByArticleId.bind(tagController));
 router.get("/:slug", tagController.getTagBySlug.bind(tagController));
-
 
 router.use(authenticate);
 
