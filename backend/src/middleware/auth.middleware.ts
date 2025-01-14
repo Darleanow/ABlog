@@ -120,3 +120,44 @@ export const verifyOwnership = (resourceTable: string): RequestHandler => {
     }
   };
 };
+
+
+export const verifyUserOwnership = (paramName: string = 'userId'): RequestHandler => {
+  return async (
+      req: Request,
+      res: Response,
+      next: NextFunction
+  ): Promise<void> => {
+    try {
+      const targetUserId = req.params[paramName];
+      const { id: currentUserId } = (req as AuthenticatedRequest).user;
+
+      const currentUserIdStr = currentUserId.toString();
+
+      const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("is_admin")
+          .eq("id", currentUserId)
+          .single();
+
+      if (userError) {
+        res.status(500).json({ error: "Erreur lors de la vérification des droits" });
+        return;
+      }
+
+      if (currentUserIdStr !== targetUserId && !userData?.is_admin) {
+        res.status(403).json({
+          error: "Vous n'êtes pas autorisé à modifier les données d'un autre utilisateur"
+        });
+        return;
+      }
+
+      next();
+    } catch (error) {
+      res.status(500).json({
+        error: "Une erreur est survenue lors de la vérification des droits d'accès"
+      });
+      return;
+    }
+  };
+};

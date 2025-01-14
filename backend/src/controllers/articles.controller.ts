@@ -312,4 +312,198 @@ export class ArticlesController {
       return res.status(500).json({ error: error.message });
     }
   }
+
+
+  async deleteArticle(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { id } = req.params;
+
+      const { data: article, error: fetchError } = await supabase
+          .from("articles")
+          .select("author_id")
+          .eq("id", id)
+          .single();
+
+      if (fetchError) throw fetchError;
+      if (!article) return res.status(404).json({ error: "Article not found" });
+
+      const { data: user } = await supabase
+          .from("users")
+          .select("is_admin")
+          .eq("id", req.user.id)
+          .single();
+
+      if (article.author_id !== req.user.id && !user?.is_admin) {
+        return res.status(403).json({ error: "Unauthorized" });
+      }
+
+      const { error: deleteError } = await supabase
+          .from("articles")
+          .delete()
+          .eq("id", id);
+
+      if (deleteError) throw deleteError;
+
+      return res.status(204).send();
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  async likeArticle(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      const { data: article, error: articleError } = await supabase
+          .from("articles")
+          .select("id")
+          .eq("id", id)
+          .single();
+
+      if (articleError || !article) {
+        return res.status(404).json({ error: "Article not found" });
+      }
+
+      const { data: existingLike, error: likeError } = await supabase
+          .from("article_likes")
+          .select("*")
+          .eq("article_id", id)
+          .eq("user_id", userId)
+          .single();
+
+      if (likeError && likeError.code !== "PGRST116") { // PGRST116 = not found, which is what we want
+        throw likeError;
+      }
+
+      if (existingLike) {
+        return res.status(400).json({ error: "Article already liked" });
+      }
+
+      const { error: insertError } = await supabase
+          .from("article_likes")
+          .insert({
+            article_id: parseInt(id),
+            user_id: userId
+          });
+
+      if (insertError) throw insertError;
+
+      const { data: likeCount, error: countError } = await supabase
+          .from("article_likes")
+          .select("count", { count: "exact" })
+          .eq("article_id", id);
+
+      if (countError) throw countError;
+
+      return res.json({ likes_count: likeCount });
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  async unlikeArticle(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      const { error: deleteError } = await supabase
+          .from("article_likes")
+          .delete()
+          .eq("article_id", id)
+          .eq("user_id", userId);
+
+      if (deleteError) throw deleteError;
+
+      const { data: likeCount, error: countError } = await supabase
+          .from("article_likes")
+          .select("count", { count: "exact" })
+          .eq("article_id", id);
+
+      if (countError) throw countError;
+
+      return res.json({ likes_count: likeCount });
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  async favoriteArticle(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      const { data: article, error: articleError } = await supabase
+          .from("articles")
+          .select("id")
+          .eq("id", id)
+          .single();
+
+      if (articleError || !article) {
+        return res.status(404).json({ error: "Article not found" });
+      }
+
+      const { data: existingFavorite, error: favoriteError } = await supabase
+          .from("favorites")
+          .select("*")
+          .eq("article_id", id)
+          .eq("user_id", userId)
+          .single();
+
+      if (favoriteError && favoriteError.code !== "PGRST116") {
+        throw favoriteError;
+      }
+
+      if (existingFavorite) {
+        return res.status(400).json({ error: "Article already in favorites" });
+      }
+
+      const { error: insertError } = await supabase
+          .from("favorites")
+          .insert({
+            article_id: parseInt(id),
+            user_id: userId
+          });
+
+      if (insertError) throw insertError;
+
+      const { data: favoriteCount, error: countError } = await supabase
+          .from("favorites")
+          .select("count", { count: "exact" })
+          .eq("article_id", id);
+
+      if (countError) throw countError;
+
+      return res.json({ favorites_count: favoriteCount });
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  async unfavoriteArticle(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      const { error: deleteError } = await supabase
+          .from("favorites")
+          .delete()
+          .eq("article_id", id)
+          .eq("user_id", userId);
+
+      if (deleteError) throw deleteError;
+
+      const { data: favoriteCount, error: countError } = await supabase
+          .from("favorites")
+          .select("count", { count: "exact" })
+          .eq("article_id", id);
+
+      if (countError) throw countError;
+
+      return res.json({ favorites_count: favoriteCount });
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
 }
