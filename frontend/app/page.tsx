@@ -132,7 +132,7 @@ export default function Home() {
         <motion.div className="flex gap-4" variants={itemVariants}>
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
-              className={`${buttonStyles({ radius: "full", size: "lg",})} text-white bg-gradient-to-r from-orange-500 to-rose-500 px-8`}
+              className={`${buttonStyles({ radius: "full", size: "lg"})} text-white bg-gradient-to-r from-orange-500 to-rose-500 px-8`}
               size="lg"
               variant="shadow"
             >
