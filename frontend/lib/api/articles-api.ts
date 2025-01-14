@@ -13,4 +13,8 @@ export class ArticlesApi extends BaseApi {
       `${API_CONFIG.endpoints.articles}?category=${categorySlug}`,
     );
   }
+
+  async getArticleBySlug(slug: string): Promise<Article> {
+    return this.fetchApi<Article>(`${API_CONFIG.endpoints.articles}/:${slug}`);
+  }
 }
