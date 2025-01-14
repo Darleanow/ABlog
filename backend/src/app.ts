@@ -7,6 +7,7 @@ import authRoutes from "./routes/auth.routes";
 import commentsRoutes from "./routes/comments.routes";
 import categoriesRoutes from "./routes/categories.routes";
 import tagsRoutes from "./routes/tags.routes";
+import userRoutes from "./routes/users.routes";
 
 
 dotenv.config();
@@ -22,6 +23,7 @@ app.use('/api/categories', categoriesRoutes);
 app.use('/api/comments', commentsRoutes);
 app.use('/api/tags', tagsRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 
 app.use(errorMiddleware);
 
