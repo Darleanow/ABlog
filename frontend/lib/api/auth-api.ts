@@ -1,30 +1,64 @@
-import { AuthRepository } from "../repositories/auth-repository";
 import { User } from "../models/user";
+import { API_CONFIG } from "../config/api.config";
 
-export class AuthApi {
-  private readonly repository: AuthRepository;
+import { BaseApi } from "./base-api";
 
-  constructor() {
-    this.repository = new AuthRepository();
-  }
-
+export class AuthApi extends BaseApi {
   async signUp(
     email: string,
     password: string,
     username: string,
     fullName: string,
   ): Promise<User> {
-    return this.repository.signUp(email, password, username, fullName);
+    try {
+      return await this.fetchApi<User>(API_CONFIG.endpoints.auth.signUp, {
+        method: "POST",
+        body: JSON.stringify({
+          email,
+          password,
+          username,
+          full_name: fullName,
+        }),
+      });
+    } catch (error: any) {
+      // Enhance error message for email verification
+      if (error.status === 400) {
+        throw new Error("Please check your email to verify your account");
+      }
+      throw error;
+    }
   }
 
   async signIn(
     email: string,
     password: string,
   ): Promise<{ user: User; token: string }> {
-    return this.repository.signIn(email, password);
+    try {
+      return await this.fetchApi<{ user: User; token: string }>(
+        API_CONFIG.endpoints.auth.signIn,
+        {
+          method: "POST",
+          body: JSON.stringify({ email, password }),
+        },
+      );
+    } catch (error: any) {
+      if (error.status === 401) {
+        throw new Error("Invalid email or password");
+      }
+      throw error;
+    }
   }
 
   async signOut(token: string): Promise<void> {
-    return this.repository.signOut(token);
+    if (!token) {
+      throw new Error("No authentication token available");
+    }
+
+    return this.fetchApi<void>(API_CONFIG.endpoints.auth.signOut, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
   }
 }
