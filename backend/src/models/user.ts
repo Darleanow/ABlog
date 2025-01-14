@@ -1,4 +1,5 @@
 import { TimestampedModel } from "./base";
+import { AuthUserData } from "./auth";
 
 interface UserBase extends TimestampedModel {
   username: string;
@@ -29,6 +30,19 @@ export interface UserFollower {
   follower_id: number;
   following_id: number;
   created_at: string;
+}
+
+export interface UserWithCounts extends Omit<User, 'password_hash'> {
+  followers: { count: number | null }[];
+  following: { count: number | null }[];
+  articles: { count: number | null }[];
+}
+
+export interface UserResponse extends Omit<User, 'password_hash'> {
+  followers_count: number;
+  following_count: number;
+  articles_count: number;
+  auth: AuthUserData | null;
 }
 
 export interface AuthorInfo {
