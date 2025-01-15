@@ -9,5 +9,8 @@ export const API_CONFIG = {
       signIn: "/auth/signin",
       signOut: "/auth/signout",
     },
+    images: {
+      upload: "/images/upload",
+    },
   },
 } as const;

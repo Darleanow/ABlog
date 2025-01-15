@@ -3,8 +3,11 @@
 import { Image } from "@nextui-org/image";
 
 import { Article } from "@/lib/models/article";
+import { sanitizeArticleContent } from "@/lib/utils/sanitize";
 
 export function ArticleContent({ article }: { readonly article: Article }) {
+  const sanitizedContent = sanitizeArticleContent(article.content);
+
   return (
     <>
       {article.featured_image_url && (
@@ -18,7 +21,7 @@ export function ArticleContent({ article }: { readonly article: Article }) {
       )}
 
       <div
-        dangerouslySetInnerHTML={{ __html: article.content }}
+        dangerouslySetInnerHTML={{ __html: sanitizedContent }}
         className="prose prose-lg max-w-none mb-12 
           prose-headings:font-bold prose-headings:bg-gradient-to-r prose-headings:from-orange-600 prose-headings:to-rose-600 prose-headings:bg-clip-text prose-headings:text-transparent
           dark:prose-headings:from-orange-400 dark:prose-headings:to-rose-400
