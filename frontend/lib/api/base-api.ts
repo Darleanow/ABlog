@@ -1,36 +1,50 @@
 import { API_CONFIG } from "../config/api.config";
 
-import { HttpError } from "./types/http-error";
-
-export class BaseApi {
-  protected baseUrl: string;
+export abstract class BaseApi {
+  protected readonly baseUrl: string;
 
   constructor() {
     this.baseUrl = API_CONFIG.baseUrl;
+  }
+
+  protected getAuthToken(): string | null {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    return localStorage.getItem("token");
   }
 
   protected async fetchApi<T>(
     endpoint: string,
     options: RequestInit = {},
   ): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-    });
+    const token = this.getAuthToken();
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    };
 
-      throw new HttpError(
-        response.status,
-        errorData.error ||
-          `API Error: ${response.status} ${response.statusText}`,
-      );
+    try {
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        ...options,
+        headers,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+
+        throw new Error(
+          errorData.message ||
+            `API Error: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      return response.json();
+    } catch (error) {
+      throw error instanceof Error ? error : new Error("Unknown API error");
     }
-
-    return response.json();
   }
 }
