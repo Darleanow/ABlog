@@ -1,3 +1,4 @@
+/*eslint no-undef: "error"*/
 import { nextui } from "@nextui-org/theme";
 
 /** @type {import('tailwindcss').Config} */
