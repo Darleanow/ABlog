@@ -61,6 +61,80 @@ src/
 - User Management
 - Likes and Favorites System
 
+### Use Case Diagram
+
+```mermaid
+flowchart TB
+    %% Actors
+    User((Anonymous User))
+    Auth((Authenticated User))
+    Admin((Admin User))
+
+    %% Use Cases - Authentication
+    auth1[Sign Up]
+    auth2[Sign In]
+    auth3[Sign Out]
+
+    %% Use Cases - Articles
+    art1[View Articles]
+    art2[View Article Details]
+    art3[Create Article]
+    art4[Edit Own Article]
+    art5[Delete Own Article]
+    art6[Like/Unlike Article]
+    art7[Favorite/Unfavorite Article]
+    art8[Manage Any Article]
+
+    %% Use Cases - Comments
+    com1[View Comments]
+    com2[Add Comment]
+    com3[Edit Own Comment]
+    com4[Delete Own Comment]
+    com5[Manage Any Comment]
+
+    %% Use Cases - Categories & Tags
+    tax1[View Categories/Tags]
+    tax2[Create Category/Tag]
+    tax3[Edit Category/Tag]
+    tax4[Delete Category/Tag]
+
+    %% Anonymous User Links
+    User --> auth1
+    User --> auth2
+    User --> art1
+    User --> art2
+    User --> com1
+    User --> tax1
+
+    %% Authenticated User Links
+    Auth --> auth3
+    Auth --> art3
+    Auth --> art4
+    Auth --> art5
+    Auth --> art6
+    Auth --> art7
+    Auth --> com2
+    Auth --> com3
+    Auth --> com4
+
+    %% Admin User Links
+    Admin --> art8
+    Admin --> com5
+    Admin --> tax2
+    Admin --> tax3
+    Admin --> tax4
+
+    %% Inheritance
+    Admin -.-> Auth
+    Auth -.-> User
+```
+
+This diagram illustrates the different user roles and their available actions in the system:
+
+- **Anonymous Users** can view public content and authenticate
+- **Authenticated Users** can create and manage their own content, plus interact with other content (likes, comments)
+- **Admin Users** have full management capabilities over all content and taxonomies
+
 ## 4. API Reference
 
 ### Base URL
@@ -119,7 +193,91 @@ Authorization: Bearer <token>
 
 ## 5. Data Models
 
-### Main Tables
+### Class Diagram
+
+```mermaid
+classDiagram
+    class BaseModel {
+        +int id
+        +string created_at
+    }
+    class TimestampedModel {
+        +string updated_at
+    }
+    class User {
+        +string username
+        +string email
+        +string password_hash
+        +string? full_name
+        +string? bio
+        +string? avatar_url
+        +boolean is_admin
+    }
+    class Article {
+        +string title
+        +string slug
+        +string content
+        +string? excerpt
+        +string? featured_image_url
+        +int author_id
+        +string status
+        +int view_count
+    }
+    class Comment {
+        +string content
+        +int user_id
+        +int article_id
+        +int? parent_comment_id
+    }
+    class Category {
+        +string name
+        +string slug
+        +string? description
+    }
+    class Tag {
+        +string name
+        +string slug
+    }
+    class ArticleLike {
+        +int user_id
+        +int article_id
+    }
+    class Favorite {
+        +int user_id
+        +int article_id
+    }
+    class UserFollower {
+        +int follower_id
+        +int following_id
+    }
+
+    BaseModel <|-- TimestampedModel
+    TimestampedModel <|-- User
+    TimestampedModel <|-- Article
+    TimestampedModel <|-- Comment
+    BaseModel <|-- Category
+    BaseModel <|-- Tag
+
+    User "1" -- "*" Article : authors
+    User "1" -- "*" Comment : writes
+    Article "1" -- "*" Comment : has
+    Article "*" -- "*" Category : belongs to
+    Article "*" -- "*" Tag : has
+    User "*" -- "*" Article : likes
+    User "*" -- "*" Article : favorites
+    User "*" -- "*" User : follows
+    Comment "0..1" -- "*" Comment : has replies
+```
+
+The class diagram above illustrates the system's data model structure and relationships:
+
+- All models inherit from either `BaseModel` or `TimestampedModel`
+- Articles can have multiple categories, tags, and comments
+- Comments can have parent-child relationships (nested comments)
+- Users can interact with articles through likes, favorites, and comments
+- Users can follow other users
+
+### Database Tables
 ```sql
 users (
   id, username, email, password_hash, full_name, bio, 
