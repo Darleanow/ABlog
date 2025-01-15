@@ -4,7 +4,7 @@ import { Link } from "@nextui-org/link";
 import { button as buttonStyles } from "@nextui-org/theme";
 import { Button } from "@nextui-org/button";
 import { Card } from "@nextui-org/card";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { Sparkles, Newspaper, PenTool, Palette } from "lucide-react";
 
 import { siteConfig } from "@/config/site";
