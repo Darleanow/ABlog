@@ -51,13 +51,13 @@ const CreateArticlePage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [categoriesData, tagsData] = await Promise.all([
-          articlesApi.getCategories(),
-          articlesApi.getTags(),
-        ]);
+        // const [categoriesData, tagsData] = await Promise.all([
+        //   articlesApi.getCategories(),
+        //   articlesApi.getTags(),
+        // ]);
 
-        setCategories(categoriesData);
-        setTags(tagsData);
+        setCategories([]);
+        setTags([]);
       } catch (error) {
         toast.error("Failed to load categories and tags");
       }
