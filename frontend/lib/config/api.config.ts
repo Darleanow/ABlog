@@ -3,6 +3,7 @@ export const API_CONFIG = {
   endpoints: {
     articles: "/articles",
     categories: "/categories",
+    comments: "/comments/article",
     tags: "/tags",
     auth: {
       signUp: "/auth/signup",

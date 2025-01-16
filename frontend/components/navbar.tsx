@@ -109,7 +109,7 @@ export const Navbar = () => {
             <div className="flex items-center gap-4">
               <span className="text-sm text-default-600">{user.full_name}</span>
               <Button
-                className={`${buttonStyles({ variant: "flat", radius: "full" })} bg-red-500 hover:bg-red-600 text-white`}
+                className={`${buttonStyles({ variant: "flat", radius: "full" })} border-medium font-bold border-red-500 hover:bg-red-600 text-white px-8`}
                 onPress={signOut}
               >
                 Log Out
@@ -117,7 +117,7 @@ export const Navbar = () => {
             </div>
           ) : (
             <Link
-              className={`${buttonStyles({ variant: "flat", radius: "full" })} bg-gradient-to-r from-orange-500 to-rose-500 text-white`}
+              className={`${buttonStyles({ variant: "flat", radius: "full" })} bg-gradient-to-r from-orange-500 to-rose-500 text-white px-8`}
               href="/auth"
             >
               Sign In

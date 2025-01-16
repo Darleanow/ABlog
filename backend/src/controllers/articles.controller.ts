@@ -7,13 +7,16 @@ import {
   ArticleWithRelations,
   CreateArticleBody,
   UpdateArticleBody,
-  ArticleCategoryInsert,
-  ArticleTagInsert,
   Category,
   AuthorInfo,
   Comment,
 } from "../models";
+import { TaxonomyService } from "../services/auto-taxonomy.service";
 
+interface ExtendedCreateArticleBody extends CreateArticleBody {
+  suggestedCategories?: string[];
+  suggestedTags?: string[];
+}
 interface CategoryJoinResult {
   categories: Category;
 }
@@ -32,6 +35,12 @@ interface SupabaseArticleResult extends Article {
 }
 
 export class ArticlesController {
+  private readonly taxonomyService: TaxonomyService;
+
+  constructor() {
+    this.taxonomyService = new TaxonomyService();
+  }
+
   async getAllArticles(_req: AuthenticatedRequest, res: Response) {
     try {
       const { data, error } = (await supabase.from("articles").select(`
@@ -56,11 +65,9 @@ export class ArticlesController {
           categories: article.article_categories.map(
             (ac: CategoryJoinResult) => ac.categories
           ),
-          tags: article.article_tags.map(
-            (at: TagJoinResult) => at.tags
-          ),
+          tags: article.article_tags.map((at: TagJoinResult) => at.tags),
           likes_count: article.article_likes?.count ?? 0,
-          favorites_count: article.favorites?.count ?? 0
+          favorites_count: article.favorites?.count ?? 0,
         };
         return transformed;
       });
@@ -106,11 +113,9 @@ export class ArticlesController {
         categories: data.article_categories.map(
           (ac: CategoryJoinResult) => ac.categories
         ),
-        tags: data.article_tags.map(
-          (at: TagJoinResult) => at.tags
-        ),
+        tags: data.article_tags.map((at: TagJoinResult) => at.tags),
         likes_count: data.article_likes?.count ?? 0,
-        favorites_count: data.favorites?.count ?? 0
+        favorites_count: data.favorites?.count ?? 0,
       };
 
       await supabase
@@ -133,8 +138,11 @@ export class ArticlesController {
         featured_image_url,
         categoryIds,
         tagIds,
-      } = req.body as CreateArticleBody;
+        suggestedCategories,
+        suggestedTags,
+      } = req.body as ExtendedCreateArticleBody;
 
+      // Create the base article
       const { data: article, error: articleError } = await supabase
         .from("articles")
         .insert({
@@ -152,51 +160,42 @@ export class ArticlesController {
 
       if (articleError) throw articleError;
 
-      if (categoryIds?.length) {
-        const { error: categoriesError } = await supabase
-          .from("article_categories")
-          .insert(
-            categoryIds.map(
-              (categoryId: number): ArticleCategoryInsert => ({
-                article_id: article.id,
-                category_id: categoryId,
-              })
-            )
+      // Handle categories
+      if (categoryIds?.length || suggestedCategories?.length) {
+        const categoriesToProcess = categoryIds?.length
+          ? await this.getExistingCategoryNames(categoryIds)
+          : suggestedCategories || [];
+
+        if (categoriesToProcess.length) {
+          const results = await this.taxonomyService.ensureCategories(
+            categoriesToProcess
           );
-
-        if (categoriesError) throw categoriesError;
+          await this.taxonomyService.createArticleCategories(
+            article.id,
+            results.map((r) => r.id)
+          );
+        }
       }
 
-      if (tagIds?.length) {
-        const { error: tagsError } = await supabase.from("article_tags").insert(
-          tagIds.map(
-            (tagId: number): ArticleTagInsert => ({
-              article_id: article.id,
-              tag_id: tagId,
-            })
-          )
-        );
+      // Handle tags
+      if (tagIds?.length || suggestedTags?.length) {
+        const tagsToProcess = tagIds?.length
+          ? await this.getExistingTagNames(tagIds)
+          : suggestedTags || [];
 
-        if (tagsError) throw tagsError;
+        if (tagsToProcess.length) {
+          const results = await this.taxonomyService.ensureTags(tagsToProcess);
+          await this.taxonomyService.createArticleTags(
+            article.id,
+            results.map((r) => r.id)
+          );
+        }
       }
 
-      const { data: articleWithRelations, error: fetchError } = (await supabase
-        .from("articles")
-        .select(
-          `
-            *,
-            author:users(username, full_name, avatar_url),
-            categories(*),
-            tags(*)
-          `
-        )
-        .eq("id", article.id)
-        .single()) as {
-        data: ArticleWithRelations | null;
-        error: any;
-      };
-
-      if (fetchError) throw fetchError;
+      // Get complete article with relations
+      const articleWithRelations = await this.getArticleWithRelations(
+        article.id
+      );
 
       return res.status(201).json(articleWithRelations);
     } catch (error) {
@@ -217,96 +216,65 @@ export class ArticlesController {
         status,
       } = req.body as UpdateArticleBody;
 
+      // Check ownership
       const { data: article, error: fetchError } = await supabase
         .from("articles")
         .select("author_id")
         .eq("id", id)
         .single();
 
-      if (fetchError) throw fetchError;
-      if (!article) return res.status(404).json({ error: "Article not found" });
+      if (fetchError || !article) {
+        return res.status(404).json({ error: "Article not found" });
+      }
 
-      const { data: user } = await supabase
-        .from("users")
-        .select("is_admin")
-        .eq("id", req.user.id)
-        .single();
-
-      if (article.author_id !== req.user.id && !user?.is_admin) {
+      if (article.author_id !== req.user.id) {
         return res.status(403).json({ error: "Unauthorized" });
       }
 
+      // Update article
       const updateData: Partial<Article> = {};
       if (title) {
         updateData.title = title;
         updateData.slug = slugify(title, { lower: true });
       }
       if (content) updateData.content = content;
-      if (excerpt) updateData.excerpt = excerpt;
-      if (featured_image_url)
+      if (excerpt !== undefined) updateData.excerpt = excerpt;
+      if (featured_image_url !== undefined)
         updateData.featured_image_url = featured_image_url;
       if (status) updateData.status = status;
 
       const { error: updateError } = await supabase
         .from("articles")
         .update(updateData)
-        .eq("id", id)
-        .select()
-        .single();
+        .eq("id", id);
 
       if (updateError) throw updateError;
 
-      if (categoryIds) {
+      // Update categories if provided
+      if (categoryIds !== undefined) {
         await supabase.from("article_categories").delete().eq("article_id", id);
 
         if (categoryIds.length) {
-          await supabase.from("article_categories").insert(
-            categoryIds.map(
-              (categoryId: number): ArticleCategoryInsert => ({
-                article_id: parseInt(id),
-                category_id: categoryId,
-              })
-            )
+          await this.taxonomyService.createArticleCategories(
+            parseInt(id),
+            categoryIds
           );
         }
       }
 
-      if (tagIds) {
+      // Update tags if provided
+      if (tagIds !== undefined) {
         await supabase.from("article_tags").delete().eq("article_id", id);
 
         if (tagIds.length) {
-          await supabase.from("article_tags").insert(
-            tagIds.map(
-              (tagId: number): ArticleTagInsert => ({
-                article_id: parseInt(id),
-                tag_id: tagId,
-              })
-            )
-          );
+          await this.taxonomyService.createArticleTags(parseInt(id), tagIds);
         }
       }
 
-      const { data: articleWithRelations, error: finalFetchError } =
-        (await supabase
-          .from("articles")
-          .select(
-            `
-            *,
-            author:users(username, full_name, avatar_url),
-            categories(*),
-            tags(*),
-            article_likes(count),
-            favorites(count)
-          `
-          )
-          .eq("id", id)
-          .single()) as {
-          data: ArticleWithRelations | null;
-          error: any;
-        };
-
-      if (finalFetchError) throw finalFetchError;
-
+      // Get updated article with relations
+      const articleWithRelations = await this.getArticleWithRelations(
+        parseInt(id)
+      );
       return res.json(articleWithRelations);
     } catch (error) {
       return res.status(500).json({ error: error.message });
@@ -501,5 +469,49 @@ export class ArticlesController {
     } catch (error) {
       return res.status(500).json({ error: error.message });
     }
+  }
+
+  private async getExistingTagNames(ids: number[]): Promise<string[]> {
+    const { data } = await supabase.from("tags").select("name").in("id", ids);
+
+    return (data || []).map((tag) => tag.name);
+  }
+
+  private async getExistingCategoryNames(ids: number[]): Promise<string[]> {
+    const { data } = await supabase
+      .from("categories")
+      .select("name")
+      .in("id", ids);
+
+    return (data || []).map((cat) => cat.name);
+  }
+
+  private async getArticleWithRelations(
+    id: number
+  ): Promise<ArticleWithRelations> {
+    const { data, error } = await supabase
+      .from("articles")
+      .select(
+        `
+        *,
+        author:users!articles_author_id_fkey(username, full_name, avatar_url),
+        article_categories(
+          categories(*)
+        ),
+        article_tags(
+          tags(*)
+        ),
+        article_likes(count),
+        favorites(count),
+        comments(
+          *,
+          user:users!comments_user_id_fkey(username, full_name, avatar_url)
+        )
+      `
+      )
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
   }
 }

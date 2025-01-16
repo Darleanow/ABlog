@@ -8,8 +8,8 @@ import { useRouter } from "next/navigation";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 
 export interface ProvidersProps {
-  children: React.ReactNode;
-  themeProps?: ThemeProviderProps;
+  readonly children: React.ReactNode;
+  readonly themeProps?: ThemeProviderProps;
 }
 
 declare module "@react-types/shared" {
