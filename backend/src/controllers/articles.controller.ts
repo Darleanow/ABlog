@@ -36,7 +36,7 @@ interface SupabaseArticleResult extends Article {
 
 export class ArticlesController {
   private readonly taxonomyService: TaxonomyService;
-  
+
   constructor() {
     this.taxonomyService = new TaxonomyService();
   }
@@ -65,11 +65,9 @@ export class ArticlesController {
           categories: article.article_categories.map(
             (ac: CategoryJoinResult) => ac.categories
           ),
-          tags: article.article_tags.map(
-            (at: TagJoinResult) => at.tags
-          ),
+          tags: article.article_tags.map((at: TagJoinResult) => at.tags),
           likes_count: article.article_likes?.count ?? 0,
-          favorites_count: article.favorites?.count ?? 0
+          favorites_count: article.favorites?.count ?? 0,
         };
         return transformed;
       });
@@ -115,11 +113,9 @@ export class ArticlesController {
         categories: data.article_categories.map(
           (ac: CategoryJoinResult) => ac.categories
         ),
-        tags: data.article_tags.map(
-          (at: TagJoinResult) => at.tags
-        ),
+        tags: data.article_tags.map((at: TagJoinResult) => at.tags),
         likes_count: data.article_likes?.count ?? 0,
-        favorites_count: data.favorites?.count ?? 0
+        favorites_count: data.favorites?.count ?? 0,
       };
 
       await supabase
@@ -157,7 +153,7 @@ export class ArticlesController {
           featured_image_url,
           author_id: req.user.id,
           status: "draft",
-          view_count: 0
+          view_count: 0,
         } satisfies Partial<Article>)
         .select()
         .single();
@@ -166,13 +162,18 @@ export class ArticlesController {
 
       // Handle categories
       if (categoryIds?.length || suggestedCategories?.length) {
-        const categoriesToProcess = categoryIds?.length 
+        const categoriesToProcess = categoryIds?.length
           ? await this.getExistingCategoryNames(categoryIds)
           : suggestedCategories || [];
 
         if (categoriesToProcess.length) {
-          const results = await this.taxonomyService.ensureCategories(categoriesToProcess);
-          await this.taxonomyService.createArticleCategories(article.id, results.map(r => r.id));
+          const results = await this.taxonomyService.ensureCategories(
+            categoriesToProcess
+          );
+          await this.taxonomyService.createArticleCategories(
+            article.id,
+            results.map((r) => r.id)
+          );
         }
       }
 
@@ -184,14 +185,19 @@ export class ArticlesController {
 
         if (tagsToProcess.length) {
           const results = await this.taxonomyService.ensureTags(tagsToProcess);
-          await this.taxonomyService.createArticleTags(article.id, results.map(r => r.id));
+          await this.taxonomyService.createArticleTags(
+            article.id,
+            results.map((r) => r.id)
+          );
         }
       }
 
       // Get complete article with relations
-      const articleWithRelations = await this.getArticleWithRelations(article.id);
-      return res.status(201).json(articleWithRelations);
+      const articleWithRelations = await this.getArticleWithRelations(
+        article.id
+      );
 
+      return res.status(201).json(articleWithRelations);
     } catch (error) {
       return res.status(500).json({ error: error.message });
     }
@@ -207,7 +213,7 @@ export class ArticlesController {
         featured_image_url,
         categoryIds,
         tagIds,
-        status
+        status,
       } = req.body as UpdateArticleBody;
 
       // Check ownership
@@ -233,7 +239,8 @@ export class ArticlesController {
       }
       if (content) updateData.content = content;
       if (excerpt !== undefined) updateData.excerpt = excerpt;
-      if (featured_image_url !== undefined) updateData.featured_image_url = featured_image_url;
+      if (featured_image_url !== undefined)
+        updateData.featured_image_url = featured_image_url;
       if (status) updateData.status = status;
 
       const { error: updateError } = await supabase
@@ -245,10 +252,7 @@ export class ArticlesController {
 
       // Update categories if provided
       if (categoryIds !== undefined) {
-        await supabase
-          .from("article_categories")
-          .delete()
-          .eq("article_id", id);
+        await supabase.from("article_categories").delete().eq("article_id", id);
 
         if (categoryIds.length) {
           await this.taxonomyService.createArticleCategories(
@@ -260,23 +264,18 @@ export class ArticlesController {
 
       // Update tags if provided
       if (tagIds !== undefined) {
-        await supabase
-          .from("article_tags")
-          .delete()
-          .eq("article_id", id);
+        await supabase.from("article_tags").delete().eq("article_id", id);
 
         if (tagIds.length) {
-          await this.taxonomyService.createArticleTags(
-            parseInt(id),
-            tagIds
-          );
+          await this.taxonomyService.createArticleTags(parseInt(id), tagIds);
         }
       }
 
       // Get updated article with relations
-      const articleWithRelations = await this.getArticleWithRelations(parseInt(id));
+      const articleWithRelations = await this.getArticleWithRelations(
+        parseInt(id)
+      );
       return res.json(articleWithRelations);
-
     } catch (error) {
       return res.status(500).json({ error: error.message });
     }
@@ -473,12 +472,9 @@ export class ArticlesController {
   }
 
   private async getExistingTagNames(ids: number[]): Promise<string[]> {
-    const { data } = await supabase
-      .from("tags")
-      .select("name")
-      .in("id", ids);
-    
-    return (data || []).map(tag => tag.name);
+    const { data } = await supabase.from("tags").select("name").in("id", ids);
+
+    return (data || []).map((tag) => tag.name);
   }
 
   private async getExistingCategoryNames(ids: number[]): Promise<string[]> {
@@ -486,20 +482,23 @@ export class ArticlesController {
       .from("categories")
       .select("name")
       .in("id", ids);
-    
-    return (data || []).map(cat => cat.name);
+
+    return (data || []).map((cat) => cat.name);
   }
 
-  private async getArticleWithRelations(id: number): Promise<ArticleWithRelations> {
+  private async getArticleWithRelations(
+    id: number
+  ): Promise<ArticleWithRelations> {
     const { data, error } = await supabase
       .from("articles")
-      .select(`
+      .select(
+        `
         *,
         author:users!articles_author_id_fkey(username, full_name, avatar_url),
-        article_categories!inner(
+        article_categories(
           categories(*)
         ),
-        article_tags!inner(
+        article_tags(
           tags(*)
         ),
         article_likes(count),
@@ -508,10 +507,10 @@ export class ArticlesController {
           *,
           user:users!comments_user_id_fkey(username, full_name, avatar_url)
         )
-      `)
+      `
+      )
       .eq("id", id)
-      .single();
-
+      .maybeSingle();
     if (error) throw error;
     return data;
   }
