@@ -30,10 +30,7 @@ export class ArticlesApi extends BaseApi {
         this.getTags(),
       ]);
 
-      this.classifier = ArticleClassifierFactory.create(
-        categories,
-        tags,
-      );
+      this.classifier = ArticleClassifierFactory.create(categories, tags);
     }
 
     return this.classifier;
