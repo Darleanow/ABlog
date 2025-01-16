@@ -303,10 +303,7 @@ export class ArticleClassifier {
 }
 
 export class ArticleClassifierFactory {
-  public static create(
-    categories: Category[],
-    tags: Tag[],
-  ): ArticleClassifier {
+  public static create(categories: Category[], tags: Tag[]): ArticleClassifier {
     return new ArticleClassifier(categories, tags);
   }
 }
