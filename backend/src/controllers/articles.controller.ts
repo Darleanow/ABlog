@@ -471,6 +471,82 @@ export class ArticlesController {
     }
   }
 
+  async getFavoriteArticles(req: AuthenticatedRequest, res: Response) {
+    try {
+      const userId = req.user.id;
+  
+      // First, get the article IDs from favorites
+      const { data: favoriteIds, error: favoritesError } = await supabase
+        .from('favorites')
+        .select('article_id')
+        .eq('user_id', userId);
+  
+      if (favoritesError) throw favoritesError;
+      
+      if (!favoriteIds?.length) {
+        return res.json([]);
+      }
+  
+      // Then get the articles with these IDs
+      const { data, error } = await supabase
+        .from("articles")
+        .select(`
+          *,
+          author:users!articles_author_id_fkey(username, full_name, avatar_url),
+          article_categories(
+            categories(*)
+          ),
+          article_tags(
+            tags(*)
+          ),
+          article_likes(count),
+          favorites(count)
+        `)
+        .in('id', favoriteIds.map(f => f.article_id));
+  
+      if (error) throw error;
+  
+      const transformedData = data?.map((article) => {
+        const transformed: ArticleWithRelations = {
+          ...article,
+          author: article.author,
+          categories: (article.article_categories || []).map(
+            (ac: CategoryJoinResult) => ac.categories
+          ),
+          tags: (article.article_tags || []).map((at: TagJoinResult) => at.tags),
+          likes_count: article.article_likes?.count ?? 0,
+          favorites_count: article.favorites?.count ?? 0,
+        };
+        return transformed;
+      });
+  
+      return res.json(transformedData || []);
+    } catch (error) {
+      console.error('Error in getFavoriteArticles:', error);
+      return res.status(500).json({ error: error.message });
+    }
+  }
+  
+  async getFavoriteStatus(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+  
+      const { count, error } = await supabase
+        .from("favorites")
+        .select("*", { count: 'exact', head: true })
+        .eq("article_id", id)
+        .eq("user_id", userId);
+  
+      if (error) throw error;
+  
+      return res.json({ is_favorited: count ? count > 0 : false });
+    } catch (error) {
+      console.error('Error in getFavoriteStatus:', error);
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
   private async getExistingTagNames(ids: number[]): Promise<string[]> {
     const { data } = await supabase.from("tags").select("name").in("id", ids);
 
