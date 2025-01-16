@@ -1,6 +1,6 @@
-// src/services/image.service.ts
 import { supabaseAdmin } from "../config/database";
 import path from "path";
+import mime from 'mime-types';
 
 export interface IImageStorageService {
   uploadImage(file: Buffer, filename: string, folder: string): Promise<string>;
@@ -25,6 +25,9 @@ export class SupabaseImageService implements IImageStorageService {
         throw new Error("Supabase admin client is not initialized");
       }
 
+      // Detect MIME type from the filename
+      const mimeType = mime.lookup(originalFilename) || 'application/octet-stream';
+
       const timestamp = Date.now();
       const ext = path.extname(originalFilename).toLowerCase();
       const sanitizedFilename = path.basename(originalFilename, ext)
@@ -32,14 +35,15 @@ export class SupabaseImageService implements IImageStorageService {
         .toLowerCase();
       const filename = `${folder}/${sanitizedFilename}-${timestamp}${ext}`;
 
-      // Convert Buffer to Blob with proper type
-      const blob = new Blob([file], { type: 'image/png' });
+      // Create Blob with the detected MIME type
+      const blob = new Blob([file], { type: mimeType });
 
-      // Upload using the blob
+      // Upload using the blob with explicit content type
       const { error: uploadError } = await supabaseAdmin.storage
         .from(this.bucketName)
         .upload(filename, blob, {
-          upsert: true
+          upsert: true,
+          contentType: mimeType // Set the correct content type
         });
 
       if (uploadError) {
