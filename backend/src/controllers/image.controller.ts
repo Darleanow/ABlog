@@ -36,12 +36,6 @@ export class ImagesController {
         return;
       }
 
-      console.log('Processing upload:', { 
-        filename: req.file.originalname,
-        mimetype: req.file.mimetype,
-        size: req.file.size
-      });
-
       const url = await this.imageService.uploadImage(
         req.file.buffer,
         req.file.originalname,
