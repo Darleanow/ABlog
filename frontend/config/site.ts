@@ -13,6 +13,11 @@ export const siteConfig = {
       href: "/blog",
     },
     {
+      label: "Favorites",
+      href: "/favorites",
+      requiresAuth: true,
+    },
+    {
       label: "About",
       href: "/about",
     },
