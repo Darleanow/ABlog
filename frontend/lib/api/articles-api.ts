@@ -6,6 +6,7 @@ import {
   ArticleClassifierFactory,
   Category,
   Tag,
+  ClassificationResult,
 } from "../repositories/article-classifier";
 
 import { BaseApi } from "./base-api";
@@ -29,7 +30,10 @@ export class ArticlesApi extends BaseApi {
         this.getTags(),
       ]);
 
-      this.classifier = ArticleClassifierFactory.create(categories, tags);
+      this.classifier = ArticleClassifierFactory.create(
+        categories,
+        tags,
+      );
     }
 
     return this.classifier;
@@ -53,10 +57,10 @@ export class ArticlesApi extends BaseApi {
     // Get category and tag suggestions if none provided
     if (!data.categoryIds?.length || !data.tagIds?.length) {
       const classifier = await this.ensureClassifier();
-      const { categoryId, tagIds } = classifier.classify(
-        data.content,
-        data.title,
-      );
+      const result = classifier.classify(data.content, data.title);
+
+      // Extract basic classification results
+      const { categoryId, tagIds } = this.extractBasicClassification(result);
 
       // Get the names instead of IDs for new suggestions
       const suggestedCategories = categoryId
@@ -80,6 +84,13 @@ export class ArticlesApi extends BaseApi {
       body: JSON.stringify(data),
       headers: this.getAuthHeaders(),
     });
+  }
+
+  private extractBasicClassification(result: ClassificationResult) {
+    return {
+      categoryId: result.categoryId,
+      tagIds: result.tagIds,
+    };
   }
 
   async getCategories(): Promise<Category[]> {
