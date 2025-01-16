@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { Clock, ArrowRight, Bookmark, Share2 } from "lucide-react";
 import { Image } from "@nextui-org/image";
@@ -6,6 +6,7 @@ import { Card } from "@nextui-org/card";
 import { motion } from "framer-motion";
 
 import { Article } from "@/lib/models/article";
+import { useFavorites } from "@/hooks/useFavorites";
 
 type Size = "large" | "default" | "tall" | "wide";
 type Variant = "default" | "minimal" | "featured";
@@ -31,6 +32,36 @@ const BentoCard = ({
   size?: Size;
   variant?: Variant;
 }) => {
+  const {
+    isFavorited,
+    isLoading,
+    error: favoriteError,
+    toggleFavorite,
+  } = useFavorites(article.id);
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareError, setShareError] = useState<string | null>(null);
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      setIsSharing(true);
+      setShareError(null);
+      const shareUrl = `${window.location.origin}/blog/${article.slug}`;
+
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      setShareError("Failed to copy link");
+    } finally {
+      setIsSharing(false);
+      setTimeout(() => setShareError(null), 3000);
+    }
+  };
+
+  const handleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await toggleFavorite();
+  };
+
   const formattedDate = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -122,28 +153,48 @@ const BentoCard = ({
 
             <div className="flex items-center gap-3">
               <button
-                className="opacity-0 group-hover:opacity-100 transform scale-90
-                group-hover:scale-100 transition-all duration-300"
-                onClick={(e) => {
-                  e.preventDefault();
-                  // Add bookmark functionality
-                }}
+                className={`opacity-0 group-hover:opacity-100 transform scale-90
+                  group-hover:scale-100 transition-all duration-300 relative
+                  ${isLoading ? "cursor-not-allowed" : "cursor-pointer"}`}
+                disabled={isLoading}
+                onClick={handleFavorite}
               >
                 <Bookmark
-                  className="text-white/80 hover:text-white"
+                  className={`
+                    ${isFavorited ? "text-orange-400 fill-orange-400" : "text-white/80 hover:text-white"}
+                    ${isLoading ? "animate-pulse" : ""}
+                  `}
                   size={18}
                 />
+                {favoriteError && (
+                  <span
+                    className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 
+                    px-2 py-1 text-xs text-white bg-red-500 rounded whitespace-nowrap"
+                  >
+                    {favoriteError}
+                  </span>
+                )}
               </button>
 
               <button
-                className="opacity-0 group-hover:opacity-100 transform scale-90
-                group-hover:scale-100 transition-all duration-300 delay-75"
-                onClick={(e) => {
-                  e.preventDefault();
-                  // Add share functionality
-                }}
+                className={`opacity-0 group-hover:opacity-100 transform scale-90
+                  group-hover:scale-100 transition-all duration-300 delay-75 relative
+                  ${isSharing ? "cursor-not-allowed" : "cursor-pointer"}`}
+                disabled={isSharing}
+                onClick={handleShare}
               >
-                <Share2 className="text-white/80 hover:text-white" size={18} />
+                <Share2
+                  className={`text-white/80 hover:text-white ${isSharing ? "animate-pulse" : ""}`}
+                  size={18}
+                />
+                {shareError && (
+                  <span
+                    className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 
+                    px-2 py-1 text-xs text-white bg-red-500 rounded whitespace-nowrap"
+                  >
+                    {shareError}
+                  </span>
+                )}
               </button>
 
               <div
