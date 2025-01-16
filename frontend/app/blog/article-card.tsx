@@ -28,7 +28,7 @@ const ArticleCard = ({ article }: { article: Article }) => {
               removeWrapper
               alt={article.title}
               className="absolute inset-0 w-full h-full object-cover"
-              src={article.featured_image_url ?? "/api/placeholder/800/600"}
+              src={article.featured_image_url ?? undefined}
             />
           </div>
         </CardHeader>

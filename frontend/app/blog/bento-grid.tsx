@@ -71,7 +71,7 @@ const BentoCard = ({
             alt={article.title}
             className="w-full h-full object-cover transform group-hover:scale-110
                      transition-transform duration-500 ease-out"
-            src={article.featured_image_url ?? "/api/placeholder/800/600"}
+            src={article.featured_image_url ?? undefined}
           />
         </div>
 

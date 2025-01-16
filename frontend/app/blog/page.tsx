@@ -3,7 +3,7 @@
 import React from "react";
 import { Tab, Tabs } from "@nextui-org/tabs";
 
-import BentoGrid from "./BentoGrid";
+import BentoGrid from "./bento-grid";
 
 import { useArticles } from "@/hooks/useArticles";
 
