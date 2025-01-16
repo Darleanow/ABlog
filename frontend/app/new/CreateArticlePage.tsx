@@ -74,6 +74,7 @@ const CreateArticlePage = () => {
       };
 
       await articlesApi.createArticle(articleData);
+
       toast.success("Article created successfully!");
       router.push("/blog");
     } catch {
