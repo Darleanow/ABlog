@@ -2,9 +2,10 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { Loader } from "lucide-react";
 
-import { ArticleHeader } from "./ArticleHeader";
-import { ArticleContent } from "./ArticleContent";
-import { ArticleFooter } from "./ArticleFooter";
+import { ArticleHeader } from "./article-header";
+import { ArticleContent } from "./article-content";
+import { ArticleFooter } from "./article-footer";
+import { CommentsSection } from "./article-comments";
 
 import { ArticlesApi } from "@/lib/api/articles-api";
 
@@ -39,6 +40,7 @@ async function ArticlePage({ slug }: ArticleContentProps) {
       <ArticleHeader article={article} />
       <ArticleContent article={article} />
       <ArticleFooter tags={article.tags} />
+      <CommentsSection articleId={article.id} />
     </div>
   );
 }

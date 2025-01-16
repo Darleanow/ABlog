@@ -67,7 +67,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, imageService }) => {
       });
 
       toast.success("Image uploaded successfully!", { id: toastId });
-    } catch (error) {
+    } catch {
       toast.error("Failed to upload image. Please try again.", { id: toastId });
 
       const attrs = editor?.getAttributes("image");
@@ -82,19 +82,14 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, imageService }) => {
     const previousUrl = editor?.getAttributes("link").href;
     const url = window.prompt("Enter URL", previousUrl);
 
-    // cancelled
-    if (url === null) {
-      return;
-    }
+    if (url === null) return;
 
-    // empty
     if (url === "") {
       editor?.chain().focus().extendMarkRange("link").unsetLink().run();
 
       return;
     }
 
-    // update link
     editor
       ?.chain()
       .focus()
@@ -106,11 +101,15 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, imageService }) => {
   if (!editor) return null;
 
   return (
-    <div className="border-b p-2 flex flex-wrap gap-2">
+    <div className="border-b border-orange-200/50 dark:border-orange-800/30 p-2 flex flex-wrap gap-2 bg-gradient-to-r from-orange-50/30 to-rose-50/30 dark:from-orange-500/5 dark:to-rose-500/5">
       <Button
         isIconOnly
+        className={`${
+          editor.isActive("heading", { level: 2 })
+            ? "bg-gradient-to-r from-orange-600 to-rose-600 text-white dark:from-orange-500 dark:to-rose-500"
+            : "bg-white/80 dark:bg-white/5 text-orange-600 dark:text-orange-400 hover:bg-orange-100/80 dark:hover:bg-white/10"
+        }`}
         size="sm"
-        variant={editor.isActive("heading", { level: 2 }) ? "solid" : "flat"}
         onPress={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
       >
         <HeadingIcon size={16} />
@@ -118,8 +117,12 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, imageService }) => {
 
       <Button
         isIconOnly
+        className={`${
+          editor.isActive("bold")
+            ? "bg-gradient-to-r from-orange-600 to-rose-600 text-white dark:from-orange-500 dark:to-rose-500"
+            : "bg-white/80 dark:bg-white/5 text-orange-600 dark:text-orange-400 hover:bg-orange-100/80 dark:hover:bg-white/10"
+        }`}
         size="sm"
-        variant={editor.isActive("bold") ? "solid" : "flat"}
         onPress={() => editor.chain().focus().toggleBold().run()}
       >
         <Bold size={16} />
@@ -127,8 +130,12 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, imageService }) => {
 
       <Button
         isIconOnly
+        className={`${
+          editor.isActive("italic")
+            ? "bg-gradient-to-r from-orange-600 to-rose-600 text-white dark:from-orange-500 dark:to-rose-500"
+            : "bg-white/80 dark:bg-white/5 text-orange-600 dark:text-orange-400 hover:bg-orange-100/80 dark:hover:bg-white/10"
+        }`}
         size="sm"
-        variant={editor.isActive("italic") ? "solid" : "flat"}
         onPress={() => editor.chain().focus().toggleItalic().run()}
       >
         <Italic size={16} />
@@ -136,8 +143,12 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, imageService }) => {
 
       <Button
         isIconOnly
+        className={`${
+          editor.isActive("bulletList")
+            ? "bg-gradient-to-r from-orange-600 to-rose-600 text-white dark:from-orange-500 dark:to-rose-500"
+            : "bg-white/80 dark:bg-white/5 text-orange-600 dark:text-orange-400 hover:bg-orange-100/80 dark:hover:bg-white/10"
+        }`}
         size="sm"
-        variant={editor.isActive("bulletList") ? "solid" : "flat"}
         onPress={() => editor.chain().focus().toggleBulletList().run()}
       >
         <List size={16} />
@@ -145,8 +156,12 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, imageService }) => {
 
       <Button
         isIconOnly
+        className={`${
+          editor.isActive("orderedList")
+            ? "bg-gradient-to-r from-orange-600 to-rose-600 text-white dark:from-orange-500 dark:to-rose-500"
+            : "bg-white/80 dark:bg-white/5 text-orange-600 dark:text-orange-400 hover:bg-orange-100/80 dark:hover:bg-white/10"
+        }`}
         size="sm"
-        variant={editor.isActive("orderedList") ? "solid" : "flat"}
         onPress={() => editor.chain().focus().toggleOrderedList().run()}
       >
         <ListOrdered size={16} />
@@ -154,15 +169,24 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, imageService }) => {
 
       <Button
         isIconOnly
+        className={`${
+          editor.isActive("link")
+            ? "bg-gradient-to-r from-orange-600 to-rose-600 text-white dark:from-orange-500 dark:to-rose-500"
+            : "bg-white/80 dark:bg-white/5 text-orange-600 dark:text-orange-400 hover:bg-orange-100/80 dark:hover:bg-white/10"
+        }`}
         size="sm"
-        variant={editor.isActive("link") ? "solid" : "flat"}
         onPress={handleLinkAdd}
       >
         <LinkIcon size={16} />
       </Button>
 
       <label className="cursor-pointer">
-        <Button isIconOnly as="span" size="sm" variant="flat">
+        <Button
+          isIconOnly
+          as="span"
+          className="bg-white/80 dark:bg-white/5 text-orange-600 dark:text-orange-400 hover:bg-orange-100/80 dark:hover:bg-white/10"
+          size="sm"
+        >
           <ImageIcon size={16} />
         </Button>
         <input
@@ -209,17 +233,23 @@ const Editor: React.FC<EditorProps> = ({
         inline: false,
         allowBase64: true,
         HTMLAttributes: {
-          class: "mx-auto rounded-lg max-w-full h-auto",
+          class: "mx-auto rounded-xl max-w-full h-auto",
         },
       }).extend({
         renderHTML({ HTMLAttributes }) {
-          // Remove classes from the attributes to handle them separately
-          const { class: _, ...attrs } = HTMLAttributes;
+          const { ...attrs } = HTMLAttributes;
 
           return [
             "div",
             { class: "flex justify-center my-4" },
-            ["img", { ...attrs, class: "rounded-lg max-w-[80%] h-auto" }],
+            [
+              "img",
+              {
+                ...attrs,
+                class:
+                  "rounded-xl max-w-[80%] h-auto shadow-lg transition-all duration-300 hover:shadow-xl",
+              },
+            ],
           ];
         },
       }),
@@ -230,7 +260,8 @@ const Editor: React.FC<EditorProps> = ({
         linkOnPaste: true,
         validate: (href) => /^https?:\/\//.test(href),
         HTMLAttributes: {
-          class: "text-blue-500 underline hover:text-blue-700",
+          class:
+            "text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 underline decoration-orange-200/50 dark:decoration-orange-800/30",
           rel: "noopener noreferrer",
           target: "_blank",
         },
@@ -240,7 +271,7 @@ const Editor: React.FC<EditorProps> = ({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none",
+          "prose prose-orange dark:prose-invert max-w-none focus:outline-none prose-headings:text-orange-600 dark:prose-headings:text-orange-400",
       },
       handleClick: (view, pos, event) => {
         const link = event?.target as HTMLAnchorElement;
@@ -260,11 +291,12 @@ const Editor: React.FC<EditorProps> = ({
   });
 
   return (
-    <div className="border rounded-lg overflow-hidden bg-content1">
+    <div className="bg-white dark:bg-transparent">
       <MenuBar editor={editor} imageService={imageService} />
       <div className="relative">
         <EditorContent
-          className="p-4 max-h-[500px] overflow-y-auto prose-sm sm:prose"
+          className="px-4 pt-2 pb-4 max-h-[500px] overflow-y-auto prose-sm sm:prose 
+                   prose-p:mt-2 prose-p:mb-2 prose-headings:mt-3 prose-headings:mb-2"
           editor={editor}
         />
       </div>
