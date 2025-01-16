@@ -1,7 +1,7 @@
 import app from "./app";
 import { supabase } from "./config/database";
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT ?? 3000;
 
 const testConnection = async () => {
   try {
