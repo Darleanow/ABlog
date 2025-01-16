@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardBody } from "@nextui-org/card";
 import { Input, Textarea } from "@nextui-org/input";
 import { Button } from "@nextui-org/button";
-import { Select, SelectItem } from "@nextui-org/select";
 import { Image } from "@nextui-org/image";
 import { ArrowLeft, ImagePlus } from "lucide-react";
 import { motion } from "framer-motion";
@@ -14,23 +13,11 @@ import Editor from "./Editor";
 import { ArticlesApi } from "@/lib/api/articles-api";
 import { ImageApi } from "@/lib/api/image-api";
 
-interface Category {
-  id: number;
-  name: string;
-}
-
-interface Tag {
-  id: number;
-  name: string;
-}
-
 interface Article {
   title: string;
   content: string;
   excerpt?: string;
   featured_image_url?: string;
-  categoryIds?: number[];
-  tagIds?: number[];
 }
 
 const CreateArticlePage = () => {
@@ -38,33 +25,11 @@ const CreateArticlePage = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [excerpt, setExcerpt] = useState("");
-  const [categoryIds, setCategoryIds] = useState<Set<string>>(new Set());
-  const [tagIds, setTagIds] = useState<Set<string>>(new Set());
   const [featuredImage, setFeaturedImage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
 
   const imageApi = new ImageApi();
   const articlesApi = new ArticlesApi();
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [categoriesData, tagsData] = await Promise.all([
-          articlesApi.getCategories(),
-          articlesApi.getTags(),
-        ]);
-
-        setCategories(categoriesData);
-        setTags(tagsData);
-      } catch (error) {
-        toast.error("Failed to load categories and tags");
-      }
-    };
-
-    fetchData();
-  }, []);
 
   const handleFeaturedImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -74,14 +39,10 @@ const CreateArticlePage = () => {
     if (!file) return;
 
     try {
-      // Create a loading toast and store its ID
       const toastId = toast.loading("Uploading thumbnail...");
-
       const imageUrl = await imageApi.uploadImage(file);
 
       setFeaturedImage(imageUrl);
-
-      // Update the same toast with success message
       toast.success("Thumbnail uploaded successfully!", { id: toastId });
     } catch (error) {
       toast.error("Failed to upload thumbnail");
@@ -107,10 +68,8 @@ const CreateArticlePage = () => {
       const articleData: Article = {
         title,
         content,
-        excerpt: excerpt ?? undefined,
+        excerpt: excerpt || undefined,
         featured_image_url: featuredImage ?? undefined,
-        categoryIds: Array.from([1]).map(Number), //Array.from(categoryIds).map(Number)
-        tagIds: Array.from([1, 2]).map(Number), //Array.from(tagIds).map(Number)
       };
 
       await articlesApi.createArticle(articleData);
@@ -253,41 +212,6 @@ const CreateArticlePage = () => {
               variant="bordered"
               onChange={(e) => setExcerpt(e.target.value)}
             />
-
-            {/* Categories and Tags */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Select
-                className="w-full"
-                label="Categories"
-                placeholder="Select categories"
-                selectedKeys={categoryIds}
-                selectionMode="multiple"
-                onChange={(e) =>
-                  setCategoryIds(new Set(e.target.value.split(",")))
-                }
-              >
-                {categories.map((category) => (
-                  <SelectItem key={category.id.toString()} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </Select>
-
-              <Select
-                className="w-full"
-                label="Tags"
-                placeholder="Select tags"
-                selectedKeys={tagIds}
-                selectionMode="multiple"
-                onChange={(e) => setTagIds(new Set(e.target.value.split(",")))}
-              >
-                {tags.map((tag) => (
-                  <SelectItem key={tag.id.toString()} value={tag.id}>
-                    {tag.name}
-                  </SelectItem>
-                ))}
-              </Select>
-            </div>
 
             {/* Editor */}
             <div className="border rounded-lg hover:border-orange-500 transition-colors">
