@@ -4,15 +4,20 @@ import { useState } from "react";
 import { Input } from "@nextui-org/input";
 import { Button } from "@nextui-org/button";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, redirect } from "next/navigation";
 
 import { useAuth } from "@/contexts/auth-context";
 
 export default function AuthForm() {
   const router = useRouter();
-  const { user, signUp, signIn, signOut, loading, error } = useAuth();
+  const { user, signUp, signIn, loading, error } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  // Redirect if user is already logged in
+  if (!loading && user) {
+    redirect("/");
+  }
 
   const toggleForm = () => {
     setIsSignUp((prev) => !prev);
@@ -51,35 +56,6 @@ export default function AuthForm() {
       <div className="flex justify-center items-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
       </div>
-    );
-  }
-
-  if (user) {
-    return (
-      <motion.div
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-md mx-auto mt-16 p-6 bg-content1 shadow-lg rounded-lg"
-        initial={{ opacity: 0, y: 20 }}
-      >
-        <h2 className="text-2xl font-semibold mb-4 text-center">
-          Welcome, <span className="text-orange-500">{user.full_name}</span>
-        </h2>
-        <p className="text-center text-default-600 mb-6">{user.email}</p>
-        <Button
-          className="w-full"
-          color="danger"
-          variant="flat"
-          onPress={() => {
-            signOut();
-            router.push("/");
-          }}
-        >
-          Log Out
-        </Button>
-        {localError && (
-          <p className="text-danger text-center mt-4">{localError}</p>
-        )}
-      </motion.div>
     );
   }
 
