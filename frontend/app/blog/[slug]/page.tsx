@@ -10,9 +10,9 @@ import { CommentsSection } from "./article-comments";
 import { ArticlesApi } from "@/lib/api/articles-api";
 
 interface PageProps {
-  readonly params: Promise<{
+  readonly params: {
     readonly slug: string;
-  }>;
+  };
 }
 
 interface ArticleContentProps {
