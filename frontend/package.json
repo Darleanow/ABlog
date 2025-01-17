@@ -39,6 +39,7 @@
 		"clsx": "2.1.1",
 		"date-fns": "^4.1.0",
 		"framer-motion": "11.13.1",
+		"fuse.js": "^7.0.0",
 		"intl-messageformat": "^10.5.0",
 		"lucide-react": "^0.471.1",
 		"next": "15.0.4",
