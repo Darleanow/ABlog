@@ -72,8 +72,8 @@ export default function FavoritesPage() {
       <div className="flex items-center justify-center min-h-[600px]">
         <motion.div
           animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           className="rounded-full h-12 w-12 border-t-2 border-r-2 border-orange-500"
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
         />
       </div>
     );
@@ -82,10 +82,10 @@ export default function FavoritesPage() {
   if (error) {
     return (
       <motion.div
-        initial="hidden"
         animate="visible"
-        variants={fadeIn}
         className="flex flex-col items-center justify-center min-h-[600px] text-center px-4"
+        initial="hidden"
+        variants={fadeIn}
       >
         <HeartCrack className="w-20 h-20 text-red-500 mb-6" />
         <h2 className="text-3xl font-bold mb-4 text-red-500">
@@ -99,10 +99,10 @@ export default function FavoritesPage() {
   if (!favorites || favorites.length === 0) {
     return (
       <motion.div
-        initial="hidden"
         animate="visible"
-        variants={fadeIn}
         className="flex flex-col items-center justify-center min-h-[600px] text-center px-4"
+        initial="hidden"
+        variants={fadeIn}
       >
         <Bookmark className="w-20 h-20 text-orange-500 mb-6" />
         <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-orange-500 to-rose-500 bg-clip-text text-transparent">
@@ -118,10 +118,10 @@ export default function FavoritesPage() {
 
   return (
     <motion.div
-      initial="hidden"
       animate="visible"
-      variants={fadeIn}
       className="container mx-auto px-4 py-12"
+      initial="hidden"
+      variants={fadeIn}
     >
       <div className="max-w-4xl mx-auto mb-12 text-center">
         <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-orange-500 to-rose-500 bg-clip-text text-transparent">
