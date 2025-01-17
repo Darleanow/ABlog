@@ -28,25 +28,30 @@ function Spinner() {
 }
 
 async function ArticlePage({ slug }: ArticleContentProps) {
-  const articlesApi = new ArticlesApi();
-  const article = await articlesApi.getArticleBySlug(slug);
+  try {
+    const articlesApi = new ArticlesApi();
+    const article = await articlesApi.getArticleBySlug(slug);
 
-  if (!article) {
-    notFound();
+    if (!article) {
+      notFound();
+    }
+
+    return (
+      <div className="px-6 lg:px-8 py-2 relative">
+        <ArticleHeader article={article} />
+        <ArticleContent article={article} />
+        <ArticleFooter tags={article.tags} />
+        <CommentsSection articleId={article.id} />
+      </div>
+    );
+  } catch (error) {
+    console.error(`Error fetching article for slug: ${slug}`, error);
+    throw error;
   }
-
-  return (
-    <div className="px-6 lg:px-8 py-2 relative">
-      <ArticleHeader article={article} />
-      <ArticleContent article={article} />
-      <ArticleFooter tags={article.tags} />
-      <CommentsSection articleId={article.id} />
-    </div>
-  );
 }
 
 export default async function Page({ params }: PageProps) {
-  const { slug } = await params;
+  const { slug } = params;
 
   return (
     <Suspense fallback={<Spinner />}>
