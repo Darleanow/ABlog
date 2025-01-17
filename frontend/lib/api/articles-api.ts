@@ -10,6 +10,7 @@ import {
 } from "../repositories/article-classifier";
 
 import { BaseApi } from "./base-api";
+import { HttpError } from "./types/http-error";
 
 export class ArticlesApi extends BaseApi {
   private classifier: ArticleClassifier | undefined;
@@ -131,5 +132,100 @@ export class ArticlesApi extends BaseApi {
 
   private getTagName(id: number): string {
     return this.classifier?.tags.find((t) => t.id === id)?.name ?? "";
+  }
+
+  async getFavoriteArticles(): Promise<Article[]> {
+    try {
+      const data = await this.fetchApi<Article[]>(
+        `${API_CONFIG.endpoints.articles}/favorites`,
+        {
+          headers: this.getAuthHeaders(),
+        },
+      );
+
+      return data || [];
+    } catch (error) {
+      if (error instanceof HttpError && error.status === 404) {
+        return [];
+      }
+      throw error;
+    }
+  }
+
+  async addToFavorites(
+    articleId: number,
+  ): Promise<{ favorites_count: number }> {
+    try {
+      return await this.fetchApi<{ favorites_count: number }>(
+        `${API_CONFIG.endpoints.articles}/${articleId}/favorite`,
+        {
+          method: "POST",
+          headers: this.getAuthHeaders(),
+        },
+      );
+    } catch (error) {
+      // If the article is already favorited, return the current count
+      if (error instanceof HttpError && error.status === 400) {
+        const status = await this.getFavoriteCount(articleId);
+
+        return { favorites_count: status };
+      }
+      throw error;
+    }
+  }
+
+  async removeFromFavorites(
+    articleId: number,
+  ): Promise<{ favorites_count: number }> {
+    try {
+      return await this.fetchApi<{ favorites_count: number }>(
+        `${API_CONFIG.endpoints.articles}/${articleId}/favorite`,
+        {
+          method: "DELETE",
+          headers: this.getAuthHeaders(),
+        },
+      );
+    } catch (error) {
+      // If the article was not favorited, return the current count
+      if (error instanceof HttpError && error.status === 404) {
+        const status = await this.getFavoriteCount(articleId);
+
+        return { favorites_count: status };
+      }
+      throw error;
+    }
+  }
+
+  async isArticleFavorited(articleId: number): Promise<boolean> {
+    try {
+      const { is_favorited } = await this.fetchApi<{ is_favorited: boolean }>(
+        `${API_CONFIG.endpoints.articles}/${articleId}/favorite/status`,
+        {
+          headers: this.getAuthHeaders(),
+        },
+      );
+
+      return is_favorited;
+    } catch (error) {
+      // If we get a 404 or any other error, assume the article is not favorited
+      if (error instanceof HttpError) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
+  private async getFavoriteCount(articleId: number): Promise<number> {
+    try {
+      const { favorites_count } = await this.fetchApi<{
+        favorites_count: number;
+      }>(`${API_CONFIG.endpoints.articles}/${articleId}/favorite/count`, {
+        headers: this.getAuthHeaders(),
+      });
+
+      return favorites_count;
+    } catch {
+      return 0;
+    }
   }
 }
