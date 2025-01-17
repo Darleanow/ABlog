@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
   Navbar as NextUINavbar,
   NavbarContent,
@@ -7,92 +8,111 @@ import {
   NavbarMenuToggle,
   NavbarBrand,
   NavbarItem,
-  NavbarMenuItem,
 } from "@nextui-org/navbar";
-import { Kbd } from "@nextui-org/kbd";
 import { Link } from "@nextui-org/link";
-import { Input } from "@nextui-org/input";
 import { Button } from "@nextui-org/button";
 import NextLink from "next/link";
-import clsx from "clsx";
-import { button as buttonStyles, link as linkStyles } from "@nextui-org/theme";
+import { motion } from "framer-motion";
 
-import { siteConfig } from "@/config/site";
-import { ThemeSwitch } from "@/components/theme-switch";
-import { GithubIcon, SearchIcon, Logo } from "@/components/icons";
+import { SearchBar } from "./search-bar";
+
 import { useAuth } from "@/contexts/auth-context";
-
-const getLinkColor = (index: number, length: number) => {
-  if (index === 2) return "primary";
-  if (index === length - 1) return "danger";
-
-  return "foreground";
-};
+import { Logo } from "@/components/icons";
+import { siteConfig } from "@/config/site";
+import { useArticles } from "@/hooks/useArticles";
 
 export const Navbar = () => {
   const { user, signOut } = useAuth();
+  const { articles } = useArticles();
 
-  const searchInput = (
-    <Input
-      aria-label="Search"
-      classNames={{
-        inputWrapper: "bg-default-100",
-        input: "text-sm",
-      }}
-      endContent={
-        <Kbd className="hidden lg:inline-block" keys={["shift"]}>
-          K
-        </Kbd>
-      }
-      labelPlacement="outside"
-      placeholder="Search..."
-      startContent={
-        <SearchIcon className="text-base text-default-400 pointer-events-none flex-shrink-0" />
-      }
-      type="search"
-    />
+  const renderNavItems = () => (
+    <ul className="hidden lg:flex gap-4 justify-start ml-2">
+      {siteConfig.navItems.map(
+        (item) =>
+          (!item.requiresAuth || (item.requiresAuth && user)) && (
+            <NavbarItem key={item.href}>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <NextLink
+                  className="text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                  href={item.href}
+                >
+                  {item.label}
+                </NextLink>
+              </motion.div>
+            </NavbarItem>
+          ),
+      )}
+    </ul>
+  );
+
+  const renderAuthSection = () => (
+    <NavbarItem className="flex gap-4 items-center">
+      {user ? (
+        <>
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            {user.full_name}
+          </span>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button
+              className="bg-gradient-to-r from-red-500 to-rose-600 text-white hover:opacity-90"
+              size="sm"
+              onPress={signOut}
+            >
+              Log Out
+            </Button>
+          </motion.div>
+        </>
+      ) : (
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <Link
+            className="bg-gradient-to-r from-orange-600 to-rose-600 text-white px-4 py-2 rounded-xl hover:opacity-90 dark:from-orange-500 dark:to-rose-500"
+            href="/auth"
+          >
+            Sign In
+          </Link>
+        </motion.div>
+      )}
+    </NavbarItem>
   );
 
   return (
-    <NextUINavbar className="bg-transparent" maxWidth="xl" position="sticky">
+    <NextUINavbar
+      className="bg-gradient-to-r from-orange-50/90 to-rose-50/90 dark:from-orange-500/5 dark:to-rose-500/5 backdrop-blur-md border-b border-orange-200/50 dark:border-orange-800/30"
+      maxWidth="xl"
+      position="sticky"
+    >
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
         <NavbarBrand as="li" className="gap-3 max-w-fit">
-          <NextLink className="flex justify-start items-center gap-1" href="/">
-            <Logo />
-            <p className="font-bold text-inherit">ABlog</p>
-          </NextLink>
+          <motion.div
+            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.5 }}
+          >
+            <NextLink
+              className="flex justify-start items-center gap-1"
+              href="/"
+            >
+              <Logo />
+              <p className="font-bold bg-gradient-to-r from-orange-600 to-rose-600 bg-clip-text text-transparent dark:from-orange-400 dark:to-rose-400">
+                ABlog
+              </p>
+            </NextLink>
+          </motion.div>
         </NavbarBrand>
-        <ul className="hidden lg:flex gap-4 justify-start ml-2">
-          {siteConfig.navItems.map(
-            (item) =>
-              // Only show items that don't require auth, or if they do, user must be logged in
-              (!item.requiresAuth || (item.requiresAuth && user)) && (
-                <NavbarItem key={item.href}>
-                  <NextLink
-                    className={clsx(
-                      linkStyles({ color: "foreground" }),
-                      "data-[active=true]:text-orange-500 data-[active=true]:font-medium",
-                    )}
-                    color="foreground"
-                    href={item.href}
-                  >
-                    {item.label}
-                  </NextLink>
-                </NavbarItem>
-              ),
-          )}
-        </ul>
+        {renderNavItems()}
         {user && (
           <NavbarItem>
-            <Link
-              className={
-                buttonStyles({ variant: "bordered", radius: "full" }) +
-                " ml-4 font-bold"
-              }
-              href="/new"
-            >
-              New article
-            </Link>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Link
+                className="border-2 border-orange-600 text-orange-600 hover:bg-orange-50 dark:border-orange-400 dark:text-orange-400 dark:hover:bg-orange-400/10 px-4 py-1 rounded-xl"
+                href="/new"
+              >
+                New article
+              </Link>
+            </motion.div>
           </NavbarItem>
         )}
       </NavbarContent>
@@ -101,58 +121,18 @@ export const Navbar = () => {
         className="hidden sm:flex basis-1/5 sm:basis-full"
         justify="end"
       >
-        <NavbarItem className="hidden sm:flex gap-2">
-          <Link isExternal aria-label="Github" href={siteConfig.links.github}>
-            <GithubIcon className="text-default-500" />
-          </Link>
-          <ThemeSwitch />
+        <NavbarItem className="hidden lg:flex">
+          <SearchBar articles={articles ?? []} />
         </NavbarItem>
-        <NavbarItem className="hidden lg:flex">{searchInput}</NavbarItem>
-        <NavbarItem>
-          {user ? (
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-default-600">{user.full_name}</span>
-              <Button
-                className={`${buttonStyles({ variant: "flat", radius: "full" })} border-medium font-bold border-red-500 hover:bg-red-600 text-white px-8`}
-                onPress={signOut}
-              >
-                Log Out
-              </Button>
-            </div>
-          ) : (
-            <Link
-              className={`${buttonStyles({ variant: "flat", radius: "full" })} bg-gradient-to-r from-orange-500 to-rose-500 text-white px-8`}
-              href="/auth"
-            >
-              Sign In
-            </Link>
-          )}
-        </NavbarItem>
+        {renderAuthSection()}
       </NavbarContent>
 
       <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
-        <Link isExternal aria-label="Github" href={siteConfig.links.github}>
-          <GithubIcon className="text-default-500" />
-        </Link>
-        <ThemeSwitch />
         <NavbarMenuToggle />
       </NavbarContent>
 
-      <NavbarMenu>
-        {searchInput}
-        <div className="mx-4 mt-2 flex flex-col gap-2">
-          {siteConfig.navMenuItems.map((item, index) => (
-            <NavbarMenuItem key={`${item.label}-${index}`}>
-              <Link
-                color={getLinkColor(index, siteConfig.navMenuItems.length)}
-                href="#"
-                size="lg"
-              >
-                {item.label}
-              </Link>
-            </NavbarMenuItem>
-          ))}
-        </div>
+      <NavbarMenu className="bg-gradient-to-r from-orange-50/95 to-rose-50/95 dark:from-orange-500/5 dark:to-rose-500/5 backdrop-blur-md pt-6">
+        <SearchBar articles={articles ?? []} />
       </NavbarMenu>
     </NextUINavbar>
   );
