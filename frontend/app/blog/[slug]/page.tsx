@@ -10,9 +10,8 @@ import { CommentsSection } from "./article-comments";
 import { ArticlesApi } from "@/lib/api/articles-api";
 
 interface PageProps {
-  readonly params: {
-    readonly slug: string;
-  };
+  params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 interface ArticleContentProps {
@@ -51,7 +50,7 @@ async function ArticlePage({ slug }: ArticleContentProps) {
 }
 
 export default async function Page({ params }: PageProps) {
-  const { slug } = params;
+  const { slug } = await params;
 
   return (
     <Suspense fallback={<Spinner />}>
