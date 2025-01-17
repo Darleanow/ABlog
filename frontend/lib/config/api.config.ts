@@ -15,3 +15,13 @@ export const API_CONFIG = {
     },
   },
 } as const;
+
+export const buildEndpoints = {
+  favorites: {
+    list: () => `${API_CONFIG.endpoints.articles}/favorites`,
+    add: (id: number) => `${API_CONFIG.endpoints.articles}/${id}/favorite`,
+    remove: (id: number) => `${API_CONFIG.endpoints.articles}/${id}/favorite`,
+    status: (id: number) =>
+      `${API_CONFIG.endpoints.articles}/${id}/favorite/status`,
+  },
+};
