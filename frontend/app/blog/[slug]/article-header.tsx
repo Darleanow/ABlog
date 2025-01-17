@@ -7,11 +7,17 @@ import { formatDistanceToNow } from "date-fns";
 import { Chip } from "@nextui-org/chip";
 import Link from "next/link";
 
+import { useAuth } from "@/contexts/auth-context";
 import { useFavorites } from "@/hooks/useFavorites";
 import { Article } from "@/lib/models/article";
 import { Category } from "@/lib/models/category";
 
-export function ArticleHeader({ article }: { readonly article: Article }) {
+interface ArticleHeaderProps {
+  readonly article: Article;
+}
+
+export function ArticleHeader({ article }: ArticleHeaderProps) {
+  const { user } = useAuth();
   const [isSharing, setIsSharing] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
   const {
@@ -29,10 +35,16 @@ export function ArticleHeader({ article }: { readonly article: Article }) {
 
       await navigator.clipboard.writeText(shareUrl);
     } catch {
-      setShareError("Erreur lors de la copie du lien");
+      setShareError("Failed to copy link");
     } finally {
       setIsSharing(false);
       setTimeout(() => setShareError(null), 3000);
+    }
+  };
+
+  const handleFavorite = async () => {
+    if (user) {
+      await toggleFavorite();
     }
   };
 
@@ -43,7 +55,7 @@ export function ArticleHeader({ article }: { readonly article: Article }) {
         href="/blog"
       >
         <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-        <span>Retour aux Articles</span>
+        <span>Back to Articles</span>
       </Link>
 
       {article.categories.length > 0 && (
@@ -101,25 +113,26 @@ export function ArticleHeader({ article }: { readonly article: Article }) {
             )}
           </button>
 
-          <button
-            className={`p-2 rounded-full hover:bg-gradient-to-r from-orange-50 to-rose-50 
-              dark:hover:from-orange-950/30 dark:hover:to-rose-950/30 transition-colors relative
-              ${
-                isFavorited
-                  ? "text-orange-500 dark:text-orange-400"
-                  : "text-orange-600/80 dark:text-orange-400/80"
-              }
-              ${isLoading ? "animate-pulse" : ""}`}
-            disabled={isLoading}
-            onClick={toggleFavorite}
-          >
-            <Bookmark className={isFavorited ? "fill-current" : ""} size={20} />
-            {favoriteError && (
-              <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-red-500 rounded whitespace-nowrap">
-                {favoriteError}
-              </span>
-            )}
-          </button>
+          {user && (
+            <button
+              className={`p-2 rounded-full hover:bg-gradient-to-r from-orange-50 to-rose-50 
+                dark:hover:from-orange-950/30 dark:hover:to-rose-950/30 transition-colors relative
+                ${isFavorited ? "text-orange-500 dark:text-orange-400" : "text-orange-600/80 dark:text-orange-400/80"}
+                ${isLoading ? "animate-pulse" : ""}`}
+              disabled={isLoading}
+              onClick={handleFavorite}
+            >
+              <Bookmark
+                className={isFavorited ? "fill-current" : ""}
+                size={20}
+              />
+              {favoriteError && (
+                <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-red-500 rounded whitespace-nowrap">
+                  {favoriteError}
+                </span>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </>
