@@ -1,16 +1,11 @@
 import { useState, useCallback, useEffect } from "react";
 
+import { useAuth } from "@/contexts/auth-context";
 import { ArticlesApi } from "@/lib/api/articles-api";
 import { HttpError } from "@/lib/api/types/http-error";
-
-interface UseFavoritesResult {
-  isFavorited: boolean;
-  isLoading: boolean;
-  error: string | null;
-  toggleFavorite: () => Promise<void>;
-}
-
+import { UseFavoritesResult } from "@/lib/models/use-favorite-result";
 export function useFavorites(articleId: number): UseFavoritesResult {
+  const { user } = useAuth();
   const [isFavorited, setIsFavorited] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,6 +15,12 @@ export function useFavorites(articleId: number): UseFavoritesResult {
     let isMounted = true;
 
     const checkFavoriteStatus = async () => {
+      if (!user) {
+        setIsFavorited(false);
+
+        return;
+      }
+
       try {
         const status = await articlesApi.isArticleFavorited(articleId);
 
@@ -32,7 +33,7 @@ export function useFavorites(articleId: number): UseFavoritesResult {
           const errorMessage =
             err instanceof HttpError
               ? err.message
-              : "Une erreur est survenue lors de la vérification des favoris";
+              : "An error occurred while checking favorites";
 
           setError(errorMessage);
         }
@@ -44,9 +45,11 @@ export function useFavorites(articleId: number): UseFavoritesResult {
     return () => {
       isMounted = false;
     };
-  }, [articleId]);
+  }, [articleId, user]);
 
   const toggleFavorite = useCallback(async () => {
+    if (!user) return;
+
     try {
       setIsLoading(true);
       setError(null);
@@ -62,13 +65,13 @@ export function useFavorites(articleId: number): UseFavoritesResult {
       const errorMessage =
         err instanceof HttpError
           ? err.message
-          : "Une erreur est survenue lors de la mise à jour des favoris";
+          : "An error occurred while updating favorites";
 
       setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, [articleId, isFavorited]);
+  }, [articleId, isFavorited, user]);
 
   return { isFavorited, isLoading, error, toggleFavorite };
 }
