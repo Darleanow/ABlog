@@ -25,7 +25,7 @@ export class TaxonomyService {
       if (existing) {
         results.push({
           id: existing.id,
-          name: existing.name
+          name: existing.name,
         });
         continue;
       }
@@ -36,19 +36,19 @@ export class TaxonomyService {
         .insert({
           name: normalizedName,
           slug,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
         } satisfies Partial<Category>)
         .select()
         .single();
 
-      if (error) {
+      if (error || !newCategory) {
         console.error(`Failed to create category ${normalizedName}:`, error);
         continue;
       }
 
       results.push({
         id: newCategory.id,
-        name: newCategory.name
+        name: newCategory.name,
       });
     }
 
@@ -85,7 +85,7 @@ export class TaxonomyService {
       if (existing) {
         results.push({
           id: existing.id,
-          name: existing.name
+          name: existing.name,
         });
         continue;
       }
@@ -96,19 +96,19 @@ export class TaxonomyService {
         .insert({
           name: normalizedName,
           slug,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
         })
         .select()
         .single();
 
-      if (error) {
+      if (error || !newTag) {
         console.error(`Failed to create tag ${normalizedName}:`, error);
         continue;
       }
 
       results.push({
         id: newTag.id,
-        name: newTag.name
+        name: newTag.name,
       });
     }
 
