@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@nextui-org/input";
 import { Button } from "@nextui-org/button";
 import { motion } from "framer-motion";
@@ -14,10 +14,11 @@ export default function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  // Redirect if user is already logged in
-  if (!loading && user) {
-    redirect("/");
-  }
+  useEffect(() => {
+    if (!loading && user) {
+      redirect("/");
+    }
+  }, [loading, user]);
 
   const toggleForm = () => {
     setIsSignUp((prev) => !prev);
@@ -42,6 +43,7 @@ export default function AuthForm() {
     try {
       if (isSignUp) {
         await signUp(email, password, email.split("@")[0], fullName);
+        await signIn(email, password);
       } else {
         await signIn(email, password);
       }
