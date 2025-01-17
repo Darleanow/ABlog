@@ -14,14 +14,22 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === "development"
+        ? "http://localhost:3000"
+        : "https://a-blog-fk1w.vercel.app",
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/articles", articlesRoutes);
-app.use('/api/categories', categoriesRoutes);
-app.use('/api/comments', commentsRoutes);
-app.use('/api/tags', tagsRoutes);
+app.use("/api/categories", categoriesRoutes);
+app.use("/api/comments", commentsRoutes);
+app.use("/api/tags", tagsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/images", imagesRoutes);
