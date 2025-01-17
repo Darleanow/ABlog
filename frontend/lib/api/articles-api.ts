@@ -224,7 +224,7 @@ export class ArticlesApi extends BaseApi {
       });
 
       return favorites_count;
-    } catch (error) {
+    } catch {
       return 0;
     }
   }
